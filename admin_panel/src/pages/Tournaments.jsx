@@ -1,0 +1,199 @@
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import { Plus, Edit2, Trash2 } from 'lucide-react';
+
+const API_URL = 'http://localhost:7893/api/admin/tournaments';
+
+const Tournaments = () => {
+  const [tournaments, setTournaments] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Format dates for input type="datetime-local"
+  const formatDateForInput = (dateStr) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  };
+
+  const [formData, setFormData] = useState({
+    name: '', format: 'knockout', timeControl: 'rapid_10', maxPlayers: 8, entryFee: 0, prizePool: 0, status: 'registration', startTime: ''
+  });
+
+  useEffect(() => {
+    fetchTournaments();
+  }, []);
+
+  const fetchTournaments = async () => {
+    try {
+      const { data } = await axios.get(API_URL);
+      setTournaments(data);
+    } catch (error) {
+      console.error('Failed to fetch tournaments', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const submitData = { ...formData, startTime: new Date(formData.startTime).toISOString() };
+      
+      if (formData._id) {
+        await axios.put(`${API_URL}/${formData._id}`, submitData);
+      } else {
+        await axios.post(API_URL, submitData);
+      }
+      setIsModalOpen(false);
+      fetchTournaments();
+    } catch (error) {
+      console.error('Failed to save tournament', error);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (confirm('Are you sure you want to delete this tournament?')) {
+      await axios.delete(`${API_URL}/${id}`);
+      fetchTournaments();
+    }
+  };
+
+  const openModal = (t = null) => {
+    if (t) {
+      setFormData({ ...t, startTime: formatDateForInput(t.startTime) });
+    } else {
+      setFormData({
+        name: '', format: 'knockout', timeControl: 'rapid_10', maxPlayers: 8, entryFee: 0, prizePool: 0, status: 'registration', startTime: formatDateForInput(new Date())
+      });
+    }
+    setIsModalOpen(true);
+  };
+
+  return (
+    <div>
+      <div className="page-header">
+        <h1 className="page-title">Tournaments</h1>
+        <button className="glass-button primary" onClick={() => openModal()}>
+          <Plus size={18} /> Schedule Tournament
+        </button>
+      </div>
+
+      <div className="glass-panel" style={{ overflow: 'hidden' }}>
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Format</th>
+              <th>Entry / Prize</th>
+              <th>Start Time</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {isLoading ? (
+              <tr><td colSpan="6" style={{ textAlign: 'center' }}>Loading...</td></tr>
+            ) : tournaments.map((t) => (
+              <tr key={t._id}>
+                <td style={{ fontWeight: 'bold' }}>{t.name}</td>
+                <td>{t.format.toUpperCase()} ({t.maxPlayers}P)</td>
+                <td>
+                  <span style={{ color: 'var(--accent-red)' }}>₹{t.entryFee}</span> /{' '}
+                  <span style={{ color: 'var(--accent-green)' }}>₹{t.prizePool}</span>
+                </td>
+                <td>{new Date(t.startTime).toLocaleString()}</td>
+                <td>
+                  <span className={`badge ${t.status === 'registration' ? 'active' : 'neutral'}`}>
+                    {t.status.toUpperCase()}
+                  </span>
+                </td>
+                <td>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button className="glass-button" onClick={() => openModal(t)}><Edit2 size={16} /></button>
+                    <button className="glass-button" onClick={() => handleDelete(t._id)}><Trash2 size={16} color="var(--accent-red)" /></button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {isModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">{formData._id ? 'Edit Tournament' : 'New Tournament'}</h2>
+            </div>
+            
+            <form onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label className="form-label">Tournament Name</label>
+                <input className="glass-input" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required />
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="form-group">
+                  <label className="form-label">Format</label>
+                  <select className="glass-input" value={formData.format} onChange={e => setFormData({...formData, format: e.target.value})}>
+                    <option value="knockout">Knockout</option>
+                    <option value="swiss">Swiss</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Time Control</label>
+                  <select className="glass-input" value={formData.timeControl} onChange={e => setFormData({...formData, timeControl: e.target.value})}>
+                    <option value="rapid_3">Bullet 3+0</option>
+                    <option value="rapid_5">Blitz 5+0</option>
+                    <option value="rapid_10">Rapid 10+0</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Max Players</label>
+                  <select className="glass-input" value={formData.maxPlayers} onChange={e => setFormData({...formData, maxPlayers: Number(e.target.value)})}>
+                    <option value="4">4 Players</option>
+                    <option value="8">8 Players</option>
+                    <option value="16">16 Players</option>
+                    <option value="32">32 Players</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Status</label>
+                  <select className="glass-input" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}>
+                    <option value="draft">Draft</option>
+                    <option value="registration">Registration</option>
+                    <option value="ongoing">Ongoing</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Entry Fee (₹)</label>
+                  <input type="number" className="glass-input" value={formData.entryFee} onChange={e => setFormData({...formData, entryFee: Number(e.target.value)})} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Prize Pool (₹)</label>
+                  <input type="number" className="glass-input" value={formData.prizePool} onChange={e => setFormData({...formData, prizePool: Number(e.target.value)})} />
+                </div>
+              </div>
+
+              <div className="form-group" style={{ marginTop: '16px' }}>
+                <label className="form-label">Start Time</label>
+                <input type="datetime-local" className="glass-input" value={formData.startTime} onChange={e => setFormData({...formData, startTime: e.target.value})} required />
+              </div>
+
+              <div className="form-actions">
+                <button type="button" className="glass-button" onClick={() => setIsModalOpen(false)}>Cancel</button>
+                <button type="submit" className="glass-button primary">Save Tournament</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Tournaments;
