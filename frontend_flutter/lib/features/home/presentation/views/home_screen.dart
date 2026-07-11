@@ -111,7 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(
             children: [
               GestureDetector(
-                onTap: () {},
+                onTap: () => context.push(AppRoutes.notifications),
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
@@ -301,77 +301,108 @@ class _HomeScreenState extends State<HomeScreen> {
       },
     );
   }
-
   Widget _buildQuickActions() {
-    final actions = [
-      {'icon': Icons.sports_esports, 'label': 'Play 1v1', 'route': AppRoutes.playMode, 'color': AppColors.purpleLight},
-      {'icon': Icons.emoji_events, 'label': 'Tournaments', 'route': AppRoutes.playMode, 'color': AppColors.gold},
-      {'icon': Icons.add, 'label': 'Create', 'route': AppRoutes.createTournament, 'color': AppColors.blue},
-      {'icon': Icons.account_balance_wallet, 'label': 'Wallet', 'route': AppRoutes.wallet, 'color': const Color(0xFFFF5252)},
-      {'icon': Icons.bar_chart, 'label': 'Leaderboard', 'route': AppRoutes.leaderboard, 'color': const Color(0xFF64B5F6)},
-      {'icon': Icons.card_giftcard, 'label': 'Refer & Earn', 'route': AppRoutes.home, 'color': AppColors.gold},
-    ];
-
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Container(width: 4, height: 16, decoration: BoxDecoration(color: AppColors.gold, borderRadius: BorderRadius.circular(2))),
+              Container(width: 4, height: 16, decoration: BoxDecoration(color: AppColors.purpleLight, borderRadius: BorderRadius.circular(2))),
               const SizedBox(width: 8),
-              Text('QUICK ACTIONS', style: TextStyle(color: context.textPrimary, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+              Text('QUICK PLAY', style: TextStyle(color: context.textPrimary, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
             ],
           ),
           const SizedBox(height: 16),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              childAspectRatio: 1.05,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-            ),
-            itemCount: actions.length,
-            itemBuilder: (context, idx) {
-              final action = actions[idx];
-              final color = action['color'] as Color;
-              return GlassCard(
-                padding: const EdgeInsets.all(12),
-                borderRadius: 20,
-                onTap: () {
-                  final route = action['route'] as String;
-                  if (route.isNotEmpty && route.startsWith('/')) {
-                    context.push(route);
-                  }
-                },
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+          // Glass Hero Play Card
+          GlassCard(
+            onTap: () => context.push(AppRoutes.playMode),
+            padding: const EdgeInsets.all(24),
+            borderRadius: 24,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.15),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(color: color.withValues(alpha: 0.2), blurRadius: 12, spreadRadius: 1),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(color: AppColors.purpleLight.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
+                            child: const Text('1 VS 1', style: TextStyle(color: AppColors.purpleLight, fontSize: 12, fontWeight: FontWeight.bold)),
+                          ),
+                          const SizedBox(height: 12),
+                          Text('PLAY ONLINE', style: TextStyle(color: context.textPrimary, fontSize: 26, fontWeight: FontWeight.w900, fontFamily: 'Rajdhani', letterSpacing: 1)),
+                          const SizedBox(height: 4),
+                          Text('Global Matchmaking', style: TextStyle(color: context.textSecondary, fontSize: 13)),
                         ],
                       ),
-                      child: Icon(action['icon'] as IconData, color: color, size: 28),
                     ),
-                    const Spacer(),
-                    Text(
-                      action['label'] as String,
-                      style: TextStyle(color: context.textPrimary, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.5),
-                      textAlign: TextAlign.center,
-                    ),
+                    const SizedBox(width: 80),
                   ],
                 ),
-              );
-            },
+                Positioned(
+                  right: -15,
+                  bottom: -20,
+                  child: Transform.rotate(
+                    angle: -0.15,
+                    child: const Text('🎮', style: TextStyle(fontSize: 100, shadows: [Shadow(color: Colors.black54, blurRadius: 20, offset: Offset(0, 10))])),
+                  ),
+                ),
+              ],
+            ),
           ),
+          const SizedBox(height: 24),
+          // Glass Action Cards
+          Row(
+            children: [
+              Container(width: 4, height: 16, decoration: BoxDecoration(color: AppColors.gold, borderRadius: BorderRadius.circular(2))),
+              const SizedBox(width: 8),
+              Text('DISCOVER', style: TextStyle(color: context.textPrimary, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 140,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              clipBehavior: Clip.none,
+              children: [
+                _buildGlassAction('Create', '⚔️', AppColors.green, () => context.push(AppRoutes.createTournament)),
+                const SizedBox(width: 16),
+                _buildGlassAction('Wallet', '💰', const Color(0xFFFF5252), () => context.push(AppRoutes.wallet)),
+                const SizedBox(width: 16),
+                _buildGlassAction('Refer & Earn', '🎁', AppColors.gold, () => context.push(AppRoutes.referral)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGlassAction(String label, String emoji, Color color, VoidCallback onTap) {
+    return GlassCard(
+      onTap: onTap,
+      width: 110,
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      borderRadius: 24,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Text(emoji, style: const TextStyle(fontSize: 32, shadows: [Shadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 6))])),
+          ),
+          const SizedBox(height: 10),
+          Text(label, style: TextStyle(color: context.textPrimary, fontSize: 13, fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -533,7 +564,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                   GestureDetector(
-                    onTap: () {},
+                    onTap: () => context.push(AppRoutes.tournamentsList),
                     child: const Text('View All', style: TextStyle(color: AppColors.gold, fontSize: 12, fontWeight: FontWeight.bold)),
                   ),
                 ],
@@ -627,19 +658,17 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             const SizedBox(width: 16),
                             GestureDetector(
-                              onTap: () => context.push(AppRoutes.tournamentDetail, extra: t['tournamentId']),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                                decoration: BoxDecoration(
-                                  gradient: AppColors.goldGrad,
-                                  borderRadius: BorderRadius.circular(24),
-                                  boxShadow: [
-                                    BoxShadow(color: AppColors.gold.withValues(alpha: 0.4), blurRadius: 10, offset: const Offset(0, 4)),
-                                  ],
+                                onTap: () => context.push(AppRoutes.tournamentDetail, extra: t['tournamentId']),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).brightness == Brightness.dark ? AppColors.gold.withOpacity(0.15) : AppColors.gold.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(24),
+                                    border: Border.all(color: AppColors.gold.withOpacity(0.5)),
+                                  ),
+                                  child: const Text('View', style: TextStyle(color: AppColors.gold, fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
                                 ),
-                                child: const Text('View', style: TextStyle(color: AppColors.navyDeep, fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
                               ),
-                            ),
                           ],
                         ),
                       ),

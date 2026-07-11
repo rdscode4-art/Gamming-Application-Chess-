@@ -8,6 +8,9 @@ import '../../../../core/theme/theme_cubit.dart';
 import '../../../auth/presentation/blocs/auth_bloc.dart';
 import '../../../auth/presentation/blocs/auth_event.dart';
 import '../../../auth/presentation/blocs/auth_state.dart';
+import '../../../../core/network/api_client.dart';
+import '../blocs/profile_bloc.dart';
+import '../blocs/profile_event.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -17,8 +20,16 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool pushNotifications = true;
-  bool darkMode = true;
+  bool _getPref(BuildContext context, String key, bool defaultValue) {
+    final state = context.watch<ProfileBloc>().state;
+    final prefs = state.userProfile?['preferences'];
+    if (prefs != null && prefs[key] != null) return prefs[key];
+    return defaultValue;
+  }
+
+  void _updatePref(BuildContext context, String key, bool value) {
+    context.read<ProfileBloc>().add(UpdatePreferences({key: value}));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,9 +51,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 24),
               _buildAccountSection(context),
               const SizedBox(height: 24),
+              _buildSoundSection(context),
+              const SizedBox(height: 24),
               _buildPreferencesSection(context),
               const SizedBox(height: 24),
               _buildLegalSection(context),
+              const SizedBox(height: 24),
+              _buildSupportSection(context),
               const SizedBox(height: 24),
               _buildLogoutButton(context),
               const SizedBox(height: 24),
@@ -104,11 +119,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           child: Column(
             children: [
-              _buildListTile(context, Icons.person_outline, 'Edit Profile', true, onTap: () {}),
+              _buildListTile(
+                context, 
+                Icons.person_outline, 
+                'Edit Profile', 
+                true, 
+                onTap: () => context.push(AppRoutes.editProfile),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSoundSection(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('SOUND & HAPTICS', style: TextStyle(color: theme.textTheme.labelMedium?.color, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1)),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.withValues(alpha: 0.2)),
+            boxShadow: isDark ? null : [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
+          ),
+          child: Column(
+            children: [
+              _buildSwitchTile(context, Icons.volume_up_outlined, 'Game Sounds', _getPref(context, 'gameSounds', true), (val) => _updatePref(context, 'gameSounds', val)),
               Divider(color: isDark ? Colors.white24 : Colors.grey.withValues(alpha: 0.2), height: 1, indent: 48),
-              _buildListTile(context, Icons.shield_outlined, 'KYC Verification', true, badge: 'PENDING', onTap: () {}),
-              Divider(color: isDark ? Colors.white24 : Colors.grey.withValues(alpha: 0.2), height: 1, indent: 48),
-              _buildListTile(context, Icons.lock_outline, 'Change Password', true, onTap: () {}),
+              _buildSwitchTile(context, Icons.vibration_outlined, 'Move Vibration', _getPref(context, 'moveVibration', true), (val) => _updatePref(context, 'moveVibration', val)),
             ],
           ),
         ),
@@ -136,8 +180,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _buildSwitchTile(context, Icons.nightlight_outlined, 'Dark Mode', context.watch<ThemeCubit>().state == ThemeMode.dark, (val) {
                 context.read<ThemeCubit>().setDarkTheme(val);
               }),
-              Divider(color: isDark ? Colors.white24 : Colors.grey.withValues(alpha: 0.2), height: 1, indent: 48),
-              _buildListTile(context, Icons.grid_on, 'Board Theme', false, trailingText: 'Classic', onTap: () {}),
             ],
           ),
         ),
@@ -162,16 +204,107 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           child: Column(
             children: [
-              _buildListTile(context, Icons.description_outlined, 'Terms & Conditions', true, onTap: () => _navigateToLegal(context, 'Terms & Conditions')),
+              _buildListTile(context, Icons.description_outlined, 'Terms & Conditions', true, onTap: () => _navigateToLegal(context, 'Terms & Conditions', 'terms_conditions')),
               Divider(color: isDark ? Colors.white24 : Colors.grey.withValues(alpha: 0.2), height: 1, indent: 48),
-              _buildListTile(context, Icons.privacy_tip_outlined, 'Privacy Policy', true, onTap: () => _navigateToLegal(context, 'Privacy Policy')),
+              _buildListTile(context, Icons.privacy_tip_outlined, 'Privacy Policy', true, onTap: () => _navigateToLegal(context, 'Privacy Policy', 'privacy_policy')),
               Divider(color: isDark ? Colors.white24 : Colors.grey.withValues(alpha: 0.2), height: 1, indent: 48),
-              _buildListTile(context, Icons.info_outline, 'Responsible Gaming', true, onTap: () => _navigateToLegal(context, 'Responsible Gaming')),
+              _buildListTile(context, Icons.info_outline, 'Responsible Gaming', true, onTap: () => _navigateToLegal(context, 'Responsible Gaming', 'responsible_gaming')),
             ],
           ),
         ),
       ],
     );
+  }
+
+  Widget _buildSupportSection(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('SUPPORT & ACCOUNT', style: TextStyle(color: theme.textTheme.labelMedium?.color, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1)),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.withValues(alpha: 0.2)),
+            boxShadow: isDark ? null : [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
+          ),
+          child: Column(
+            children: [
+              _buildListTile(
+                context, 
+                Icons.support_agent_outlined, 
+                'Help & Support', 
+                true, 
+                onTap: () => context.push(AppRoutes.support),
+              ),
+              Divider(color: isDark ? Colors.white24 : Colors.grey.withValues(alpha: 0.2), height: 1, indent: 48),
+              _buildListTile(
+                context, 
+                Icons.delete_outline, 
+                'Delete Account', 
+                true, 
+                onTap: () {
+                  _showDeleteAccountDialog(context);
+                }
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  bool _isDeleting = false;
+
+  void _showDeleteAccountDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        title: const Text('Delete Account', style: TextStyle(color: AppColors.red)),
+        content: const Text('Are you sure you want to permanently delete your account? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _deleteAccount(context);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.red),
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteAccount(BuildContext context) async {
+    if (_isDeleting) return;
+    setState(() => _isDeleting = true);
+    
+    try {
+      // Import ApiClient globally or use full path if needed
+      // Assuming ApiClient is already imported or available via core/network
+      // We will add the import at the top
+      await ApiClient.instance.delete('/users/me');
+      
+      if (mounted) {
+        setState(() => _isDeleting = false);
+        // Dispatch logout to clear local state
+        context.read<AuthBloc>().add(AuthLogoutRequested());
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isDeleting = false);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to delete account')));
+      }
+    }
   }
 
   Widget _buildListTile(BuildContext context, IconData icon, String title, bool hasArrow, {String? badge, String? trailingText, VoidCallback? onTap}) {
@@ -206,17 +339,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _navigateToLegal(BuildContext context, String title) {
+  void _navigateToLegal(BuildContext context, String title, String settingKey) {
     context.push(
       AppRoutes.legal,
       extra: {
         'title': title,
-        'content': 'This is the official $title for Checkmate. Please read these terms carefully before using the application. By accessing or using our services, you agree to be bound by these terms.\n\n'
-                   '1. Introduction\nWelcome to Checkmate. This application provides a platform for playing chess matches and tournaments.\n\n'
-                   '2. User Accounts\nYou are responsible for safeguarding your account password and any activities under your account.\n\n'
-                   '3. Code of Conduct\nPlayers must maintain good sportsmanship. Cheating, using engine assistance, or abusing other players will result in immediate ban.\n\n'
-                   '4. Financial Transactions\nAll transactions are final. Withdrawals are processed according to our payout schedule.\n\n'
-                   '5. Limitation of Liability\nWe are not liable for any indirect, incidental, or consequential damages arising from your use of the app.',
+        'settingKey': settingKey,
       },
     );
   }

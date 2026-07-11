@@ -50,6 +50,7 @@ const gameModeAdminRoutes = require('./modules/matchmaking/gameModeAdminRoutes')
 const bannerAdminRoutes = require('./modules/banners/bannerAdminRoutes');
 const tournamentAdminRoutes = require('./modules/tournaments/tournamentAdminRoutes');
 const userAdminRoutes = require('./modules/users/userAdminRoutes');
+const settingsRoutes = require('./modules/settings/settingsRoutes');
 
 app.get('/', (req, res) => res.status(200).send(`<h1>🚀 Chess Platform Backend is running!</h1>`));
 app.get('/health', (req, res) => res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() }));
@@ -61,12 +62,16 @@ app.use('/api/contests', contestRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/tournaments', tournamentRoutes);
 app.use('/api/banners', bannerRoutes);
+app.use('/api/support', require('./modules/support/supportRoutes'));
 
 // Admin Routes (Modularized)
 app.use('/api/admin/gamemodes', gameModeAdminRoutes);
 app.use('/api/admin/banners', bannerAdminRoutes);
 app.use('/api/admin/tournaments', tournamentAdminRoutes);
 app.use('/api/admin/users', userAdminRoutes);
+
+// Settings Routes
+app.use('/api/settings', settingsRoutes);
 
 // ─── Error Handler ────────────────────────────────────────────────────────
 app.use(errorHandler);

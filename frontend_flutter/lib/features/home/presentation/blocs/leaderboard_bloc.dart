@@ -13,7 +13,7 @@ class LeaderboardBloc extends Bloc<LeaderboardEvent, LeaderboardState> {
   Future<void> _onLoadLeaderboard(LoadLeaderboard event, Emitter<LeaderboardState> emit) async {
     emit(state.copyWith(isLoading: true, error: null));
     try {
-      final data = await _repository.fetchLeaderboard(limit: event.limit);
+      final data = await _repository.fetchLeaderboard(limit: event.limit, type: event.type);
       emit(state.copyWith(
         isLoading: false,
         leaderboard: data,

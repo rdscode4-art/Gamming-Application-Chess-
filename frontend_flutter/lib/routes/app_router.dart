@@ -19,7 +19,12 @@ import '../../features/profile/presentation/views/settings_screen.dart';
 import '../../features/profile/presentation/views/legal_screen.dart';
 import '../../features/matchmaking/presentation/views/tournament_detail_screen.dart';
 import '../../features/matchmaking/presentation/views/create_tournament_screen.dart';
+import '../../features/matchmaking/presentation/views/tournaments_list_screen.dart';
 import '../../features/game/presentation/views/victory_screen.dart';
+import '../../features/referral/presentation/views/referral_screen.dart';
+import '../../features/notifications/presentation/views/notifications_screen.dart';
+import '../../features/profile/presentation/views/edit_profile_screen.dart';
+import '../../features/profile/presentation/views/support_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../core/di/service_locator.dart';
 import '../features/matchmaking/presentation/blocs/matchmaking_bloc.dart';
@@ -52,6 +57,11 @@ class AppRoutes {
   static const profile = '/profile';
   static const settings = '/settings';
   static const legal = '/legal';
+  static const referral = '/referral';
+  static const notifications = '/notifications';
+  static const editProfile = '/edit-profile';
+  static const support = '/support';
+  static const tournamentsList = '/tournaments-list';
 }
 
 final GoRouter appRouter = GoRouter(
@@ -164,6 +174,13 @@ final GoRouter appRouter = GoRouter(
       ),
     ),
     GoRoute(
+      path: AppRoutes.tournamentsList,
+      builder: (context, state) => BlocProvider.value(
+        value: getIt<TournamentBloc>(),
+        child: const TournamentsListScreen(),
+      ),
+    ),
+    GoRoute(
       path: AppRoutes.victory,
       builder: (context, state) {
         final result = state.extra as Map<String, dynamic>?;
@@ -201,9 +218,28 @@ final GoRouter appRouter = GoRouter(
         final extra = state.extra as Map<String, dynamic>? ?? {};
         return LegalScreen(
           title: extra['title'] ?? 'Legal',
-          content: extra['content'] ?? '',
+          settingKey: extra['settingKey'] ?? '',
         );
       },
+    ),
+    GoRoute(
+      path: AppRoutes.referral,
+      builder: (context, state) => const ReferralScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.notifications,
+      builder: (context, state) => const NotificationsScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.editProfile,
+      builder: (context, state) => BlocProvider.value(
+        value: getIt<ProfileBloc>(),
+        child: const EditProfileScreen(),
+      ),
+    ),
+    GoRoute(
+      path: AppRoutes.support,
+      builder: (context, state) => const SupportScreen(),
     ),
   ],
 );

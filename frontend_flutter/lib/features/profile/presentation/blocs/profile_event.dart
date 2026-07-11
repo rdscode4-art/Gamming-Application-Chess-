@@ -6,3 +6,11 @@ abstract class ProfileEvent extends Equatable {
 }
 
 class LoadProfile extends ProfileEvent {}
+
+class UpdatePreferences extends ProfileEvent {
+  final Map<String, dynamic> preferences;
+  UpdatePreferences(this.preferences);
+
+  @override
+  List<Object?> get props => [preferences];
+}

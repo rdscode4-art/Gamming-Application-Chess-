@@ -3,9 +3,9 @@ import 'package:http/http.dart' as http;
 import '../../../../core/constants/app_constants.dart';
 
 class LeaderboardRepository {
-  Future<List<dynamic>> fetchLeaderboard({int limit = 100}) async {
+  Future<List<dynamic>> fetchLeaderboard({int limit = 100, String type = 'global'}) async {
     final response = await http.get(
-      Uri.parse('${AppConstants.leaderboardUrl}?limit=$limit'),
+      Uri.parse('${AppConstants.leaderboardUrl}?limit=$limit&type=$type'),
     );
 
     if (response.statusCode == 200) {

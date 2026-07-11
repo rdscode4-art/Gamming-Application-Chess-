@@ -7,6 +7,7 @@ import '../../../../routes/app_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../blocs/leaderboard_bloc.dart';
 import '../blocs/leaderboard_state.dart';
+import '../blocs/leaderboard_event.dart';
 
 class LeaderboardScreen extends StatefulWidget {
   const LeaderboardScreen({super.key});
@@ -17,7 +18,7 @@ class LeaderboardScreen extends StatefulWidget {
 
 class _LeaderboardScreenState extends State<LeaderboardScreen> {
   String _selectedTab = 'Global';
-  final List<String> _tabs = ['Global', 'Classic', 'Rapid', 'Tournament'];
+  final List<String> _tabs = ['Global', 'Classic', 'Rapid'];
 
   @override
   Widget build(BuildContext context) {
@@ -139,7 +140,12 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             final isSelected = _selectedTab == tab;
             return Expanded(
               child: GestureDetector(
-                onTap: () => setState(() => _selectedTab = tab),
+                onTap: () {
+                  if (_selectedTab != tab) {
+                    setState(() => _selectedTab = tab);
+                    context.read<LeaderboardBloc>().add(LoadLeaderboard(type: tab.toLowerCase()));
+                  }
+                },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.symmetric(vertical: 10),

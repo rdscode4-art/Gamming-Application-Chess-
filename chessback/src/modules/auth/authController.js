@@ -2,6 +2,7 @@ const User = require('../../models/User');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const { v4: uuidv4 } = require('uuid');
+const SystemSetting = require('../../models/SystemSetting');
 
 // ─── Token Helpers ──────────────────────────────────────────────────────────
 
@@ -223,10 +224,20 @@ exports.completeProfile = async (req, res, next) => {
     if (referralCode && !user.referredBy) {
       const referrer = await User.findOne({ referralCode });
       if (referrer && referrer.userId !== user.userId) {
+        let rewardAmount = 50; // default fallback
+        try {
+          const setting = await SystemSetting.findOne({ key: 'referral_reward_amount' });
+          if (setting && setting.value) {
+            rewardAmount = Number(setting.value);
+          }
+        } catch (err) {
+          console.error("Error fetching referral_reward_amount from SystemSettings", err);
+        }
+
         user.referredBy = referrer.userId;
-        user.bonusBalance += 25; // Bonus for the new user
+        user.bonusBalance += rewardAmount; // Bonus for the new user
         
-        referrer.bonusBalance += 25; // Bonus for the referrer
+        referrer.bonusBalance += rewardAmount; // Bonus for the referrer
         referrer.referralCount += 1;
         await referrer.save();
       }

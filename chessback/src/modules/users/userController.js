@@ -45,6 +45,8 @@ exports.getMyProfile = async (req, res, next) => {
       referralCode: user.referralCode,
       referralCount: user.referralCount,
 
+      preferences: user.preferences,
+
       joinedAt: user.createdAt,
     });
   } catch (error) {
@@ -55,7 +57,7 @@ exports.getMyProfile = async (req, res, next) => {
 // PUT /api/users/me — update profile
 exports.updateMyProfile = async (req, res, next) => {
   try {
-    const { username, avatarUrl } = req.body;
+    const { username, avatarUrl, preferences } = req.body;
     const user = await User.findOne({ userId: req.user.userId });
     if (!user) return res.status(404).json({ message: 'User not found' });
 
@@ -69,9 +71,28 @@ exports.updateMyProfile = async (req, res, next) => {
     }
 
     if (avatarUrl !== undefined) user.avatarUrl = avatarUrl;
+    
+    if (preferences !== undefined) {
+      user.preferences = { ...user.preferences, ...preferences };
+    }
 
     await user.save();
-    res.status(200).json({ message: 'Profile updated', username: user.username, avatarUrl: user.avatarUrl });
+    res.status(200).json({ message: 'Profile updated', username: user.username, avatarUrl: user.avatarUrl, preferences: user.preferences });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// DELETE /api/users/me — delete profile
+exports.deleteMyAccount = async (req, res, next) => {
+  try {
+    const user = await User.findOne({ userId: req.user.userId });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Hard delete for now, as requested.
+    await User.deleteOne({ userId: req.user.userId });
+
+    res.status(200).json({ message: 'Account deleted successfully' });
   } catch (error) {
     next(error);
   }

@@ -118,6 +118,13 @@ const UserSchema = new mongoose.Schema({
   refreshToken: { type: String, select: false },
   passwordResetOtp: { type: String, select: false },
   passwordResetExpires: { type: Date, select: false },
+  preferences: {
+    gameSounds: { type: Boolean, default: true },
+    moveVibration: { type: Boolean, default: true },
+    autoQueenPromotion: { type: Boolean, default: true },
+    enablePreMoves: { type: Boolean, default: false },
+    inGameChat: { type: Boolean, default: true }
+  }
 
 }, { timestamps: true });
 

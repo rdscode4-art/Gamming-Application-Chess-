@@ -7,8 +7,9 @@ abstract class LeaderboardEvent extends Equatable {
 
 class LoadLeaderboard extends LeaderboardEvent {
   final int limit;
-  LoadLeaderboard({this.limit = 100});
+  final String type;
+  LoadLeaderboard({this.limit = 100, this.type = 'global'});
 
   @override
-  List<Object?> get props => [limit];
+  List<Object?> get props => [limit, type];
 }

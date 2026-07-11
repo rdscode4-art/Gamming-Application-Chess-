@@ -11,6 +11,11 @@ import '../blocs/game_event.dart';
 import '../blocs/game_state.dart';
 import '../../../../routes/app_router.dart';
 import 'dart:async';
+import 'package:flutter/services.dart';
+import 'package:audioplayers/audioplayers.dart';
+import '../../../profile/presentation/blocs/profile_bloc.dart';
+import '../../../profile/presentation/blocs/profile_state.dart';
+import '../../../profile/presentation/blocs/profile_event.dart';
 
 class GameScreen extends StatefulWidget {
   final Map<String, dynamic>? matchData;
@@ -22,6 +27,27 @@ class GameScreen extends StatefulWidget {
 
 class _GameScreenState extends State<GameScreen> {
   late ChessBoardController chessController;
+  final AudioPlayer _audioPlayer = AudioPlayer();
+
+  bool _getPref(BuildContext context, String key, bool defaultValue) {
+    final state = context.read<ProfileBloc>().state;
+    final prefs = state.userProfile?['preferences'];
+    if (prefs != null && prefs[key] != null) return prefs[key];
+    return defaultValue;
+  }
+
+  void _playFeedback() async {
+    if (_getPref(context, 'moveVibration', true)) {
+      HapticFeedback.mediumImpact();
+    }
+    if (_getPref(context, 'gameSounds', true)) {
+      try {
+        await _audioPlayer.play(AssetSource('sounds/move.wav'));
+      } catch (e) {
+        debugPrint('Failed to play sound: $e');
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -34,6 +60,7 @@ class _GameScreenState extends State<GameScreen> {
 
   @override
   void dispose() {
+    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -45,6 +72,7 @@ class _GameScreenState extends State<GameScreen> {
       listener: (context, state) {
         if (state.fen != null && state.fen != chessController.game.fen) {
           chessController.loadFen(state.fen!);
+          _playFeedback();
         }
         if (state.isGameOver) {
           // Route to victory screen immediately
@@ -141,6 +169,7 @@ class _GameScreenState extends State<GameScreen> {
                                 final history = chessController.game.history;
                                 if (history.isNotEmpty) {
                                   final move = history.last.move;
+                                  _playFeedback();
                                   context.read<GameBloc>().add(GameMakeMove(
                                         from: move.fromAlgebraic,
                                         to: move.toAlgebraic,
@@ -234,7 +263,9 @@ class _GameScreenState extends State<GameScreen> {
                               }
                             });
                           }, hasBadge: state.hasUnreadMessages),
-                          _buildAction(Icons.settings, 'Settings', context.textSecondary, () {}),
+                          _buildAction(Icons.settings, 'Settings', context.textSecondary, () {
+                            _showSettingsBottomSheet(context);
+                          }),
                         ],
                       ),
                     ),
@@ -471,6 +502,86 @@ class _GameScreenState extends State<GameScreen> {
               context.read<GameBloc>().add(GameAcceptDraw());
             },
             child: const Text('Accept', style: TextStyle(color: AppColors.green)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSettingsBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          decoration: BoxDecoration(
+            color: context.bgColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1)))),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Settings', style: TextStyle(color: context.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
+                      GestureDetector(onTap: () => Navigator.pop(ctx), child: Icon(Icons.close, color: context.textSecondary)),
+                    ],
+                  ),
+                ),
+                BlocBuilder<ProfileBloc, ProfileState>(
+                  bloc: context.read<ProfileBloc>(),
+                  builder: (context, state) {
+                    final gameSounds = _getPref(context, 'gameSounds', true);
+                    final moveVibration = _getPref(context, 'moveVibration', true);
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Column(
+                        children: [
+                          _buildSwitchTile(context, Icons.volume_up_outlined, 'Game Sounds', gameSounds, (val) {
+                            context.read<ProfileBloc>().add(UpdatePreferences({'gameSounds': val}));
+                          }),
+                          Divider(color: Theme.of(context).brightness == Brightness.dark ? Colors.white24 : Colors.grey.withValues(alpha: 0.2), height: 1, indent: 48),
+                          _buildSwitchTile(context, Icons.vibration_outlined, 'Move Vibration', moveVibration, (val) {
+                            context.read<ProfileBloc>().add(UpdatePreferences({'moveVibration': val}));
+                          }),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSwitchTile(BuildContext context, IconData icon, String title, bool value, ValueChanged<bool> onChanged) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Icon(icon, color: context.textSecondary, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(title, style: TextStyle(color: context.textPrimary, fontSize: 14, fontWeight: FontWeight.bold)),
+          ),
+          SizedBox(
+            height: 24,
+            child: Switch(
+              value: value,
+              onChanged: onChanged,
+              activeColor: Colors.white,
+              activeTrackColor: Theme.of(context).colorScheme.primary,
+            ),
           ),
         ],
       ),
