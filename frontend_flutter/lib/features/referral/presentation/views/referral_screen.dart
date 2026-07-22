@@ -6,6 +6,10 @@ import '../../../../core/widgets/bg_blobs.dart';
 import '../../../../core/widgets/glass_card.dart';
 import '../../../../core/widgets/back_header.dart';
 import '../../../../core/network/api_client.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:share_plus/share_plus.dart';
+import '../../../profile/presentation/blocs/profile_bloc.dart';
+import '../../../profile/presentation/blocs/profile_state.dart';
 
 class ReferralScreen extends StatefulWidget {
   const ReferralScreen({super.key});
@@ -154,7 +158,8 @@ class _ReferralScreenState extends State<ReferralScreen> {
   }
 
   Widget _buildReferralCode(BuildContext context) {
-    const code = 'CHESS50';
+    final state = context.watch<ProfileBloc>().state;
+    final code = state.userProfile?['referralCode'] ?? 'CHESS50';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -170,10 +175,10 @@ class _ReferralScreenState extends State<ReferralScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(code, style: TextStyle(color: AppColors.gold, fontSize: 24, fontWeight: FontWeight.w900, fontFamily: 'Rajdhani', letterSpacing: 2)),
+              Text(code, style: const TextStyle(color: AppColors.gold, fontSize: 24, fontWeight: FontWeight.w900, fontFamily: 'Rajdhani', letterSpacing: 2)),
               GestureDetector(
                 onTap: () {
-                  Clipboard.setData(const ClipboardData(text: code));
+                  Clipboard.setData(ClipboardData(text: code));
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Referral code copied!'), backgroundColor: AppColors.green, duration: Duration(seconds: 2)));
                 },
                 child: Container(
@@ -190,10 +195,15 @@ class _ReferralScreenState extends State<ReferralScreen> {
   }
 
   Widget _buildShareButton(BuildContext context) {
+    final state = context.watch<ProfileBloc>().state;
+    final code = state.userProfile?['referralCode'] ?? 'CHESS50';
     return GestureDetector(
       onTap: () {
-        // Handle share intent
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sharing functionality coming soon!')));
+        Share.share(
+          'Hey! Join Checkmate, the ultimate multiplayer chess platform. '
+          'Use my referral code "$code" when signing up to get a joining bonus! '
+          'Download now: https://checkmate.app/download'
+        );
       },
       child: Container(
         width: double.infinity,

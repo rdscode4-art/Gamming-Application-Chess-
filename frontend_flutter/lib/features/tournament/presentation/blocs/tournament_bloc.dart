@@ -2,6 +2,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'tournament_event.dart';
 import 'tournament_state.dart';
 import '../../data/repositories/tournament_repository.dart';
+import '../../../../core/di/service_locator.dart';
+import '../../../wallet/presentation/blocs/wallet_bloc.dart';
+import '../../../wallet/presentation/blocs/wallet_event.dart';
 
 class TournamentBloc extends Bloc<TournamentEvent, TournamentState> {
   final TournamentRepository _repository;
@@ -57,6 +60,7 @@ class TournamentBloc extends Bloc<TournamentEvent, TournamentState> {
         successMessage: 'Successfully joined tournament!',
       ));
       add(LoadTournamentDetails(event.tournamentId));
+      getIt<WalletBloc>().add(WalletFetchData());
     } catch (e) {
       emit(state.copyWith(isActionLoading: false, error: e.toString().replaceAll('Exception: ', '')));
     }

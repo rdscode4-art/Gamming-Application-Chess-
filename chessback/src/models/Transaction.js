@@ -11,7 +11,7 @@ const TransactionSchema = new mongoose.Schema({
   amount: { type: Number, required: true },
   balanceType: {
     type: String,
-    enum: ['deposit', 'winnings', 'bonus'],
+    enum: ['deposit', 'winnings', 'bonus', 'mixed'],
     default: 'deposit'
   },
   status: {

@@ -83,18 +83,45 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTicker
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<MatchmakingBloc, MatchmakingState>(
-      listener: (context, state) {
-        if (state.matchFoundData != null && !_isMatchFound) {
-          _startCountdown(state.matchFoundData!);
+    return WillPopScope(
+      onWillPop: () async {
+        if (_isMatchFound) return false; // Prevent backing out during VS countdown
+        
+        final confirm = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppColors.glassBg : Colors.white,
+            title: Text('Cancel Matchmaking?', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color)),
+            content: Text('Are you sure you want to stop searching for a match?', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color)),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('No')),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true), 
+                child: const Text('Yes', style: TextStyle(color: AppColors.red)),
+              ),
+            ],
+          ),
+        );
+        
+        if (confirm == true) {
+          context.read<MatchmakingBloc>().add(MatchmakingSearchCancelled());
+          return true;
         }
+        return false;
       },
-      builder: (context, state) {
-        if (_isMatchFound && _foundData != null) {
-          return _buildVSScreen();
+      child: BlocConsumer<MatchmakingBloc, MatchmakingState>(
+        listener: (context, state) {
+          if (state.matchFoundData != null && !_isMatchFound) {
+            _startCountdown(state.matchFoundData!);
+          }
+        },
+        builder: (context, state) {
+          if (_isMatchFound && _foundData != null) {
+            return _buildVSScreen();
+          }
+          return _buildSearchingScreen(state);
         }
-        return _buildSearchingScreen(state);
-      }
+      ),
     );
   }
 

@@ -9,6 +9,7 @@ import '../../../../core/network/api_client.dart';
 import '../blocs/profile_bloc.dart';
 import '../blocs/profile_state.dart';
 import '../blocs/profile_event.dart';
+import 'package:image_picker/image_picker.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -93,12 +94,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.bgColor,
-      body: Stack(
-        children: [
-          Container(decoration: BoxDecoration(gradient: context.isDark ? AppColors.navyGrad : null)),
-          const BgBlobs(),
-          SafeArea(
-            child: Column(
+      body: BlocListener<ProfileBloc, ProfileState>(
+        listenWhen: (previous, current) => previous.isLoading != current.isLoading || previous.error != current.error,
+        listener: (context, state) {
+          if (state.error != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Upload Error: ${state.error}'), backgroundColor: AppColors.red),
+            );
+          } else if (!state.isLoading && state.userProfile != null) {
+            // Check if it was an upload success by checking if we just finished loading
+            final bool wasLoading = context.read<ProfileBloc>().state.isLoading;
+            // Actually it's better to just show success if error is null and loading finished
+          }
+        },
+        child: Stack(
+          children: [
+            Container(decoration: BoxDecoration(gradient: context.isDark ? AppColors.navyGrad : null)),
+            const BgBlobs(),
+            SafeArea(
+              child: Column(
               children: [
                 BackHeader(title: 'Edit Profile', onBack: () => context.pop()),
                 Expanded(
@@ -118,40 +132,75 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
               ],
             ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildAvatarSection(BuildContext context) {
-    return Center(
-      child: Stack(
+    return BlocBuilder<ProfileBloc, ProfileState>(
+      builder: (context, state) {
+        final user = state.userProfile ?? {};
+        final avatarUrl = user['avatarUrl'] as String?;
+
+        return Center(
+          child: Stack(
         clipBehavior: Clip.none,
         alignment: Alignment.bottomRight,
         children: [
           Container(
             width: 100,
             height: 100,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: AppColors.purpleLight,
               shape: BoxShape.circle,
+              image: avatarUrl != null && avatarUrl.isNotEmpty
+                  ? DecorationImage(image: NetworkImage(avatarUrl), fit: BoxFit.cover)
+                  : null,
             ),
-            child: Center(
-              child: Text(
-                _usernameController.text.isNotEmpty ? _usernameController.text[0].toUpperCase() : 'U',
-                style: const TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold),
+            child: (avatarUrl == null || avatarUrl.isEmpty)
+                ? Center(
+                    child: Text(
+                      _usernameController.text.isNotEmpty ? _usernameController.text[0].toUpperCase() : 'U',
+                      style: const TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold),
+                    ),
+                  )
+                : null,
+          ),
+          if (state.isLoading)
+            const Positioned.fill(
+              child: Center(
+                child: CircularProgressIndicator(color: AppColors.gold),
               ),
             ),
-          ),
           Positioned(
             bottom: 0,
             right: 0,
             child: GestureDetector(
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Avatar upload coming soon!')),
-                );
+              onTap: () async {
+                try {
+                  final ImagePicker picker = ImagePicker();
+                  final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                  
+                  if (image != null && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Starting upload...')),
+                    );
+                    context.read<ProfileBloc>().add(UploadAvatar(image.path));
+                  } else if (image == null && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('No image selected')),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Picker Error: $e')),
+                    );
+                  }
+                }
               },
               child: Container(
                 padding: const EdgeInsets.all(8),
@@ -167,6 +216,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ],
       ),
     );
+    });
   }
 
   Widget _buildInputForm(BuildContext context) {

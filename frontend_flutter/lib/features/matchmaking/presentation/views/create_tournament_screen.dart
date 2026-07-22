@@ -19,18 +19,15 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
   bool _isPublic = true;
   
   final _nameCtrl = TextEditingController();
-  final _playersCtrl = TextEditingController(text: '8');
+  int _selectedPlayers = 8;
   final _entryFeeCtrl = TextEditingController(text: '100');
-  final _prizePoolCtrl = TextEditingController(text: '800');
   final _startDateCtrl = TextEditingController();
   final _startTimeCtrl = TextEditingController();
 
   @override
   void dispose() {
     _nameCtrl.dispose();
-    _playersCtrl.dispose();
     _entryFeeCtrl.dispose();
-    _prizePoolCtrl.dispose();
     _startDateCtrl.dispose();
     _startTimeCtrl.dispose();
     super.dispose();
@@ -58,15 +55,13 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
                     const SizedBox(height: 24),
                     Text('PLAYER COUNT', style: TextStyle(color: context.textSecondary, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
                     const SizedBox(height: 12),
-                    _buildInputField(icon: Icons.people_outline, hint: 'e.g. 8, 16, 32, 64', controller: _playersCtrl, isNumber: true),
+                    _buildPlayerSelector(),
                     const SizedBox(height: 24),
                     Text('ENTRY FEE (₹)', style: TextStyle(color: context.textSecondary, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
                     const SizedBox(height: 12),
                     _buildInputField(icon: Icons.attach_money, hint: 'e.g. 100', controller: _entryFeeCtrl, isNumber: true),
-                    const SizedBox(height: 24),
-                    Text('PRIZE POOL (₹)', style: TextStyle(color: context.textSecondary, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
-                    const SizedBox(height: 12),
-                    _buildInputField(icon: Icons.emoji_events_outlined, hint: 'e.g. 1600', controller: _prizePoolCtrl, isNumber: true),
+                    const SizedBox(height: 8),
+                    Text('Prize pool will be automatically calculated (90% of total entry fees)', style: TextStyle(color: context.textSecondary, fontSize: 11, fontStyle: FontStyle.italic)),
                     const SizedBox(height: 24),
                     Row(
                       children: [
@@ -76,7 +71,22 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
                             children: [
                               Text('START DATE', style: TextStyle(color: context.textSecondary, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
                               const SizedBox(height: 12),
-                              _buildInputField(icon: Icons.schedule, hint: 'DD/MM/YYYY', controller: _startDateCtrl),
+                              _buildInputField(
+                                icon: Icons.schedule, 
+                                hint: 'DD/MM/YYYY', 
+                                controller: _startDateCtrl,
+                                onTap: () async {
+                                  final date = await showDatePicker(
+                                    context: context,
+                                    initialDate: DateTime.now().add(const Duration(days: 1)),
+                                    firstDate: DateTime.now(),
+                                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                                  );
+                                  if (date != null) {
+                                    _startDateCtrl.text = '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+                                  }
+                                },
+                              ),
                             ],
                           ),
                         ),
@@ -87,7 +97,20 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
                             children: [
                               Text('START TIME', style: TextStyle(color: context.textSecondary, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
                               const SizedBox(height: 12),
-                              _buildInputField(icon: Icons.schedule, hint: 'HH:MM', controller: _startTimeCtrl),
+                              _buildInputField(
+                                icon: Icons.schedule, 
+                                hint: 'HH:MM', 
+                                controller: _startTimeCtrl,
+                                onTap: () async {
+                                  final time = await showTimePicker(
+                                    context: context,
+                                    initialTime: TimeOfDay.now(),
+                                  );
+                                  if (time != null && context.mounted) {
+                                    _startTimeCtrl.text = time.format(context);
+                                  }
+                                },
+                              ),
                             ],
                           ),
                         ),
@@ -122,8 +145,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
           ],
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: BlocConsumer<TournamentBloc, TournamentState>(
+      bottomNavigationBar: BlocConsumer<TournamentBloc, TournamentState>(
         listener: (context, state) {
           if (state.successMessage != null) {
             Fluttertoast.showToast(msg: state.successMessage!, backgroundColor: AppColors.green);
@@ -152,9 +174,8 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
                   context.read<TournamentBloc>().add(CreateTournament({
                     'name': _nameCtrl.text,
                     'timeControl': _selectedFormat,
-                    'maxPlayers': int.tryParse(_playersCtrl.text) ?? 8,
+                    'maxPlayers': _selectedPlayers,
                     'entryFee': int.tryParse(_entryFeeCtrl.text) ?? 0,
-                    'prizePool': int.tryParse(_prizePoolCtrl.text) ?? 0,
                     'isPrivate': !_isPublic,
                   }));
                 },
@@ -165,10 +186,10 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
                     color: state.isActionLoading ? Colors.grey : Theme.of(context).colorScheme.primary,
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Center(
-                    child: state.isActionLoading
-                      ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Theme.of(context).scaffoldBackgroundColor))
-                      : Text('Create Tournament', style: TextStyle(color: Theme.of(context).scaffoldBackgroundColor, fontSize: 16, fontWeight: FontWeight.w900)),
+                  child: Text(
+                    'Create Tournament',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Theme.of(context).scaffoldBackgroundColor, fontSize: 16, fontWeight: FontWeight.w900),
                   ),
                 ),
               ),
@@ -209,31 +230,36 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
     );
   }
 
-  Widget _buildInputField({required IconData icon, required String hint, TextEditingController? controller, bool isNumber = false}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: context.textSecondary, size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: TextField(
-              controller: controller,
-              keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-              style: TextStyle(color: context.textPrimary, fontSize: 14),
-              decoration: InputDecoration(
-                hintText: hint,
-                hintStyle: TextStyle(color: context.textSecondary, fontSize: 14),
-                border: InputBorder.none,
+  Widget _buildInputField({required IconData icon, required String hint, TextEditingController? controller, bool isNumber = false, VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        decoration: BoxDecoration(
+          color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: context.textSecondary, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextField(
+                controller: controller,
+                keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+                style: TextStyle(color: context.textPrimary, fontSize: 14),
+                readOnly: onTap != null,
+                onTap: onTap,
+                decoration: InputDecoration(
+                  hintText: hint,
+                  hintStyle: TextStyle(color: context.textSecondary, fontSize: 14),
+                  border: InputBorder.none,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -271,6 +297,39 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
           ),
         );
       }).toList(),
+    );
+  }
+
+  Widget _buildPlayerSelector() {
+    final counts = [2, 4, 8, 16, 32, 64, 128, 256];
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: counts.map((count) {
+          final isSelected = _selectedPlayers == count;
+          return GestureDetector(
+            onTap: () => setState(() => _selectedPlayers = count),
+            child: Container(
+              margin: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              decoration: BoxDecoration(
+                color: isSelected ? Colors.blueAccent : (Theme.of(context).brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05)),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Center(
+                child: Text(
+                  '$count',
+                  style: TextStyle(
+                    color: isSelected ? Theme.of(context).scaffoldBackgroundColor : context.textSecondary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 }

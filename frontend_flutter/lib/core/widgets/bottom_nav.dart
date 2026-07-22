@@ -31,7 +31,7 @@ class BottomNav extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _buildItem(context, Icons.home_outlined, Icons.home, 'Home', AppRoutes.home, location),
-                _buildItem(context, Icons.emoji_events_outlined, Icons.emoji_events, 'Tournaments', AppRoutes.playMode, location),
+                _buildItem(context, Icons.emoji_events_outlined, Icons.emoji_events, 'Tournaments', AppRoutes.tournamentsList, location),
                 _buildCenterItem(context, Icons.play_arrow, AppRoutes.playMode, location),
                 _buildItem(context, Icons.bar_chart, Icons.bar_chart, 'Leaderboard', AppRoutes.leaderboard, location),
                 _buildItem(context, Icons.person_outline, Icons.person, 'Profile', AppRoutes.profile, location),

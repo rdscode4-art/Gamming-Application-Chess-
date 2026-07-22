@@ -5,7 +5,10 @@ class TournamentRepository {
   Future<List<dynamic>> fetchTournaments() async {
     final response = await ApiService.get(AppConstants.tournamentsUrl);
     if (response != null) {
-      return response as List<dynamic>;
+      if (response.containsKey('data') && response['data'] is List) {
+        return response['data'] as List<dynamic>;
+      }
+      return response as List<dynamic>; // fallback just in case
     }
     throw Exception('Failed to load tournaments');
   }

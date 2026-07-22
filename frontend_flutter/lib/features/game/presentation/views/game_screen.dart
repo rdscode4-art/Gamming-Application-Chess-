@@ -87,8 +87,34 @@ class _GameScreenState extends State<GameScreen> {
       },
       builder: (context, state) {
         final urgent = state.myTime < 30;
-        return Scaffold(
-          backgroundColor: context.bgColor,
+        return WillPopScope(
+          onWillPop: () async {
+            if (state.isGameOver) return true;
+            
+            final confirm = await showDialog<bool>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppColors.glassBg : Colors.white,
+                title: Text('Resign Game?', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color)),
+                content: Text('Are you sure you want to leave? This will count as a resignation and you will lose the game.', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color)),
+                actions: [
+                  TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, true), 
+                    child: const Text('Resign', style: TextStyle(color: AppColors.red)),
+                  ),
+                ],
+              ),
+            );
+            
+            if (confirm == true) {
+              context.read<GameBloc>().add(GameResign());
+              return true;
+            }
+            return false;
+          },
+          child: Scaffold(
+            backgroundColor: context.bgColor,
           body: Stack(
             children: [
               Container(
@@ -274,7 +300,7 @@ class _GameScreenState extends State<GameScreen> {
               ),
             ],
           ),
-        );
+        ));
       },
     );
   }

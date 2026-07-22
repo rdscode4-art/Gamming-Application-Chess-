@@ -1,12 +1,33 @@
 const Tournament = require('../../models/Tournament');
 const User = require('../../models/User');
 const Transaction = require('../../models/Transaction');
+const SystemSetting = require('../../models/SystemSetting');
 const { v4: uuidv4 } = require('uuid');
 
 // POST /api/tournaments
 exports.createTournament = async (req, res, next) => {
   try {
-    const { name, description, format, timeControl, maxPlayers, entryFee, prizePool, startTime, isPrivate } = req.body;
+    const { name, description, format, timeControl, maxPlayers, entryFee, startTime, isPrivate, customDistribution = [100] } = req.body;
+
+    const commissionSetting = await SystemSetting.findOne({ key: 'user_private_tournament_commission' });
+    const commissionPercentage = commissionSetting && commissionSetting.value !== undefined ? Number(commissionSetting.value) : 10;
+
+    const totalCollection = (entryFee || 0) * (maxPlayers || 8);
+    const platformFee = Math.floor(totalCollection * (commissionPercentage / 100));
+    const prizePool = totalCollection - platformFee;
+
+    let prizeDistribution = [];
+    if (prizePool > 0) {
+      customDistribution.forEach((percentage, index) => {
+        if (percentage > 0) {
+          prizeDistribution.push({
+            position: index + 1,
+            percentage: percentage,
+            amount: Math.floor(prizePool * (percentage / 100))
+          });
+        }
+      });
+    }
 
     const tournament = await Tournament.create({
       tournamentId: uuidv4(),
@@ -17,6 +38,10 @@ exports.createTournament = async (req, res, next) => {
       maxPlayers,
       entryFee,
       prizePool,
+      platformFee,
+      commissionPercentage,
+      distributionStrategy: 'custom',
+      prizeDistribution,
       startTime,
       isPrivate,
       createdBy: req.user.userId,
@@ -47,8 +72,12 @@ exports.getTournamentDetails = async (req, res, next) => {
     const tournament = await Tournament.findOne({ tournamentId: req.params.id });
     if (!tournament) return res.status(404).json({ message: 'Tournament not found' });
     
+    const tournamentObj = tournament.toObject();
+    tournamentObj.isUserRegistered = tournament.registeredPlayers.includes(req.user.userId);
+    tournamentObj.isFull = tournament.registeredPlayers.length >= tournament.maxPlayers;
+
     // In a real app, we'd populate registered players' details
-    res.status(200).json(tournament);
+    res.status(200).json(tournamentObj);
   } catch (error) {
     next(error);
   }

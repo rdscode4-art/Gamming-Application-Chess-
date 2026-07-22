@@ -27,6 +27,8 @@ const TournamentSchema = new mongoose.Schema({
   entryFee: { type: Number, default: 0 },
   prizePool: { type: Number, default: 0 },
   platformFee: { type: Number, default: 0 },
+  commissionPercentage: { type: Number, default: 10 },
+  distributionStrategy: { type: String, enum: ['winner_takes_all', 'top_2', 'top_3', 'custom'], default: 'winner_takes_all' },
   prizeDistribution: [{
     position: Number,
     percentage: Number,

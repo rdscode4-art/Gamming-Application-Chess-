@@ -8,6 +8,8 @@ import 'package:intl/intl.dart';
 import '../../../tournament/presentation/blocs/tournament_bloc.dart';
 import '../../../tournament/presentation/blocs/tournament_event.dart';
 import '../../../tournament/presentation/blocs/tournament_state.dart';
+import '../../../../core/services/storage_service.dart';
+import 'package:share_plus/share_plus.dart';
 
 class TournamentDetailScreen extends StatelessWidget {
   const TournamentDetailScreen({super.key});
@@ -59,8 +61,7 @@ class TournamentDetailScreen extends StatelessWidget {
               ),
             ],
           ),
-          floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-          floatingActionButton: _buildBottomActionBar(context, t, state.isActionLoading),
+          bottomNavigationBar: _buildBottomActionBar(context, t, state.isActionLoading),
         );
       }
     );
@@ -84,16 +85,41 @@ class TournamentDetailScreen extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              GestureDetector(
-                onTap: () => context.pop(),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    shape: BoxShape.circle,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  GestureDetector(
+                    onTap: () => context.pop(),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
+                    ),
                   ),
-                  child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
-                ),
+                  GestureDetector(
+                    onTap: () {
+                      final name = t['name'] ?? 'Tournament';
+                      final prize = t['prizePool'] ?? 0;
+                      final id = t['tournamentId'] ?? '';
+                      Share.share(
+                        '🏆 Join the "$name" tournament on Checkmate!\n\n'
+                        '💰 Prize Pool: ₹$prize\n'
+                        '👉 Sign up now and play: https://checkmate.app/tournament/$id',
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.share, color: Colors.white, size: 18),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 20),
               Text(
@@ -253,6 +279,18 @@ class TournamentDetailScreen extends StatelessWidget {
   }
 
   Widget _buildBottomActionBar(BuildContext context, Map<String, dynamic> t, bool isLoading) {
+    final bool isRegistered = t['isUserRegistered'] == true;
+    final bool isFull = t['isFull'] == true;
+
+    String buttonText = 'Join Tournament';
+    if (isRegistered) {
+      buttonText = 'Registered';
+    } else if (isFull) {
+      buttonText = 'Tournament Full';
+    }
+
+    final bool isDisabled = isLoading || isRegistered || isFull;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -264,21 +302,20 @@ class TournamentDetailScreen extends StatelessWidget {
           children: [
             Expanded(
               child: GestureDetector(
-                onTap: isLoading ? null : () {
+                onTap: isDisabled ? null : () {
                   context.read<TournamentBloc>().add(JoinTournament(t['tournamentId']));
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  height: 56,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    gradient: isLoading ? null : context.bgGradient, // AppColors.goldGrad replacement not ideal if it's primary button, let's use primary color instead. Wait, bgGradient is fine or just primary color.
-                    color: isLoading ? Colors.grey : Theme.of(context).colorScheme.primary,
+                    gradient: isDisabled ? null : AppColors.goldGrad,
+                    color: isDisabled ? Colors.grey : AppColors.gold,
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Center(
-                    child: isLoading 
-                      ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Theme.of(context).scaffoldBackgroundColor))
-                      : Text('Join Tournament', style: TextStyle(color: Theme.of(context).scaffoldBackgroundColor, fontSize: 16, fontWeight: FontWeight.w900)),
-                  ),
+                  child: isLoading 
+                      ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.black))
+                      : Text(buttonText, style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w900)),
                 ),
               ),
             ),

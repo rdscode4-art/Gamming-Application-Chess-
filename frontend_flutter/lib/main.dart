@@ -7,6 +7,9 @@ import 'core/services/storage_service.dart';
 import 'core/di/service_locator.dart';
 import 'routes/app_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'core/services/fcm_service.dart';
 import 'features/auth/presentation/blocs/auth_bloc.dart';
 import 'core/theme/theme_cubit.dart';
 
@@ -32,6 +35,15 @@ void main() async {
   await StorageService.init();
   ApiClient.init();
   setupServiceLocator();
+
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    await FCMService().init();
+  } catch (e) {
+    debugPrint('Firebase initialization error: $e');
+  }
 
   runApp(const ChessPlatformApp());
 }

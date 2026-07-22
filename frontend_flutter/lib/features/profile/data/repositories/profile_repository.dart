@@ -39,4 +39,28 @@ class ProfileRepository {
       throw Exception('Failed to load match history');
     }
   }
+
+  Future<String> uploadAvatar(String filePath) async {
+    final token = StorageService.getString(AppConstants.tokenKey);
+    if (token == null) throw Exception('No token found');
+
+    // Make sure we have the correct base url for the endpoint
+    // Fallback to the standard /api/users/avatar if AppConstants doesn't have it
+    // Actually we will construct it from AppConstants.myProfileUrl
+    final baseUrl = AppConstants.myProfileUrl.replaceAll('/me', '/avatar');
+    
+    var request = http.MultipartRequest('POST', Uri.parse(baseUrl));
+    request.headers['Authorization'] = 'Bearer $token';
+    request.files.add(await http.MultipartFile.fromPath('avatar', filePath));
+
+    var streamedResponse = await request.send().timeout(const Duration(seconds: 15));
+    var response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['avatarUrl'];
+    } else {
+      throw Exception('Failed to upload avatar');
+    }
+  }
 }

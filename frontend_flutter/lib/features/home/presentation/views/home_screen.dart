@@ -7,6 +7,7 @@ import '../../../../core/widgets/bg_blobs.dart';
 import '../../../../core/widgets/glass_card.dart';
 import '../../../../core/widgets/avatar_badge.dart';
 import '../../../../routes/app_router.dart';
+import '../../../../core/services/storage_service.dart';
 import '../../../matchmaking/presentation/blocs/matchmaking_bloc.dart';
 import '../../../matchmaking/presentation/blocs/matchmaking_state.dart';
 import '../../../wallet/presentation/blocs/wallet_bloc.dart';
@@ -71,8 +72,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       _buildHeader(state),
                       _buildBannerCarousel(),
                       _buildQuickActions(),
-                      _buildLiveMatches(),
                       _buildUpcomingTournaments(),
+                      _buildLiveMatches(),
                     ],
                   ),
                 ),
@@ -547,7 +548,18 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildUpcomingTournaments() {
     return BlocBuilder<TournamentBloc, TournamentState>(
       builder: (context, state) {
-        final tourneys = state.tournaments;
+        final currentUserId = StorageService.getString('USER_ID');
+        final allTourneys = state.tournaments;
+        
+        // Only show tournaments that the user has joined
+        final tourneys = allTourneys.where((t) {
+          final registeredPlayers = t['registeredPlayers'] as List? ?? [];
+          return currentUserId != null && registeredPlayers.any((p) {
+            if (p is String) return p == currentUserId;
+            if (p is Map) return p['userId'] == currentUserId || p['_id'] == currentUserId;
+            return false;
+          });
+        }).toList();
 
         return Padding(
           padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),

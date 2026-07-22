@@ -11,6 +11,7 @@ import '../../../auth/presentation/blocs/auth_state.dart';
 import '../../../../core/network/api_client.dart';
 import '../blocs/profile_bloc.dart';
 import '../blocs/profile_event.dart';
+import '../blocs/profile_state.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -20,8 +21,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _getPref(BuildContext context, String key, bool defaultValue) {
-    final state = context.watch<ProfileBloc>().state;
+  bool _getPref(ProfileState state, String key, bool defaultValue) {
     final prefs = state.userProfile?['preferences'];
     if (prefs != null && prefs[key] != null) return prefs[key];
     return defaultValue;
@@ -42,34 +42,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildHeader(context),
-              const SizedBox(height: 24),
-              _buildAccountSection(context),
-              const SizedBox(height: 24),
-              _buildSoundSection(context),
-              const SizedBox(height: 24),
-              _buildPreferencesSection(context),
-              const SizedBox(height: 24),
-              _buildLegalSection(context),
-              const SizedBox(height: 24),
-              _buildSupportSection(context),
-              const SizedBox(height: 24),
-              _buildLogoutButton(context),
-              const SizedBox(height: 24),
-              Center(
-                child: Text(
-                  'Checkmate v1.0.0 • Build 2024.12',
-                  style: TextStyle(color: Theme.of(context).textTheme.labelMedium?.color, fontSize: 12),
-                ),
+        child: BlocBuilder<ProfileBloc, ProfileState>(
+          builder: (context, profileState) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildHeader(context),
+                  const SizedBox(height: 24),
+                  _buildAccountSection(context),
+                  const SizedBox(height: 24),
+                  _buildSoundSection(context, profileState),
+                  const SizedBox(height: 24),
+                  _buildPreferencesSection(context),
+                  const SizedBox(height: 24),
+                  _buildLegalSection(context),
+                  const SizedBox(height: 24),
+                  _buildSupportSection(context),
+                  const SizedBox(height: 24),
+                  _buildLogoutButton(context),
+                  const SizedBox(height: 24),
+                  Center(
+                    child: Text(
+                      'Checkmate v1.0.0 • Build 2024.12',
+                      style: TextStyle(color: Theme.of(context).textTheme.labelMedium?.color, fontSize: 12),
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                ],
               ),
-              const SizedBox(height: 40),
-            ],
-          ),
+            );
+          },
         ),
       ),
     ));
@@ -124,7 +128,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Icons.person_outline, 
                 'Edit Profile', 
                 true, 
-                onTap: () => context.push(AppRoutes.editProfile),
+                onTap: () {
+                  final userProfile = context.read<ProfileBloc>().state.userProfile ?? {};
+                  context.push(AppRoutes.editProfile, extra: userProfile);
+                },
               ),
             ],
           ),
@@ -133,7 +140,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildSoundSection(BuildContext context) {
+  Widget _buildSoundSection(BuildContext context, ProfileState profileState) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     return Column(
@@ -150,9 +157,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           child: Column(
             children: [
-              _buildSwitchTile(context, Icons.volume_up_outlined, 'Game Sounds', _getPref(context, 'gameSounds', true), (val) => _updatePref(context, 'gameSounds', val)),
+              _buildSwitchTile(context, Icons.volume_up_outlined, 'Game Sounds', _getPref(profileState, 'gameSounds', true), (val) => _updatePref(context, 'gameSounds', val)),
               Divider(color: isDark ? Colors.white24 : Colors.grey.withValues(alpha: 0.2), height: 1, indent: 48),
-              _buildSwitchTile(context, Icons.vibration_outlined, 'Move Vibration', _getPref(context, 'moveVibration', true), (val) => _updatePref(context, 'moveVibration', val)),
+              _buildSwitchTile(context, Icons.vibration_outlined, 'Move Vibration', _getPref(profileState, 'moveVibration', true), (val) => _updatePref(context, 'moveVibration', val)),
             ],
           ),
         ),

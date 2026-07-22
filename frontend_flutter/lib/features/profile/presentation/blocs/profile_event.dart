@@ -14,3 +14,11 @@ class UpdatePreferences extends ProfileEvent {
   @override
   List<Object?> get props => [preferences];
 }
+
+class UploadAvatar extends ProfileEvent {
+  final String filePath;
+  UploadAvatar(this.filePath);
+
+  @override
+  List<Object?> get props => [filePath];
+}

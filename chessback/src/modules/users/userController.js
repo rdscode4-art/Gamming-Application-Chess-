@@ -98,6 +98,55 @@ exports.deleteMyAccount = async (req, res, next) => {
   }
 };
 
+// POST /api/users/avatar
+exports.uploadAvatar = async (req, res, next) => {
+  console.log('[UPLOAD] /api/users/avatar hit. file:', req.file);
+  try {
+    if (!req.file) {
+      console.log('[UPLOAD] No file found in req');
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    const user = await User.findOne({ userId: req.user.userId });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Assuming the server is running on localhost or a domain, construct the full URL.
+    // In production, this should ideally use an env variable for the base URL.
+    const baseUrl = process.env.API_BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const avatarUrl = `${baseUrl}/avatars/${req.file.filename}`;
+
+    user.avatarUrl = avatarUrl;
+    await user.save();
+
+    res.status(200).json({
+      message: 'Avatar uploaded successfully',
+      avatarUrl: avatarUrl
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// POST /api/users/fcm-token
+exports.updateFcmToken = async (req, res, next) => {
+  try {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ message: 'FCM token is required' });
+
+    const user = await User.findOne({ userId: req.user.userId });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    if (!user.fcmTokens.includes(token)) {
+      user.fcmTokens.push(token);
+      await user.save();
+    }
+
+    res.status(200).json({ message: 'FCM token updated successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // GET /api/users/:id — public profile
 exports.getPublicProfile = async (req, res, next) => {
   try {

@@ -5,6 +5,8 @@ import GameModes from './pages/GameModes'
 import Banners from './pages/Banners'
 import Tournaments from './pages/Tournaments'
 import Users from './pages/Users'
+import Settings from './pages/Settings'
+import Support from './pages/Support'
 
 function App() {
   return (
@@ -17,6 +19,8 @@ function App() {
           <Route path="/banners" element={<Banners />} />
           <Route path="/tournaments" element={<Tournaments />} />
           <Route path="/users" element={<Users />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/support" element={<Support />} />
         </Routes>
       </main>
     </div>

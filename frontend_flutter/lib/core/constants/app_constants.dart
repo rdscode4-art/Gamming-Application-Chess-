@@ -1,7 +1,7 @@
 class AppConstants {
   // ─── Base URLs ────────────────────────────────────────────────────────────
-  // Using direct Wi-Fi IP so multiple devices on the same network can connect.
-  static const String baseUrl = 'http://192.168.1.19:7893';
+  // Using production server
+  static const String baseUrl = 'https://chessback.ridealdigitalseva.com';
   static const String apiUrl = '$baseUrl/api';
 
   // ─── Storage Keys ─────────────────────────────────────────────────────────

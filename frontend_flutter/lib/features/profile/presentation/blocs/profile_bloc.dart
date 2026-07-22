@@ -4,6 +4,7 @@ import 'profile_state.dart';
 import '../../data/repositories/profile_repository.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/services/fcm_service.dart';
 
 class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   final ProfileRepository _repository;
@@ -11,6 +12,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   ProfileBloc(this._repository) : super(const ProfileState()) {
     on<LoadProfile>(_onLoadProfile);
     on<UpdatePreferences>(_onUpdatePreferences);
+    on<UploadAvatar>(_onUploadAvatar);
   }
 
   Future<void> _onLoadProfile(LoadProfile event, Emitter<ProfileState> emit) async {
@@ -33,6 +35,17 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         userProfile: user,
         matchHistory: matchHistory,
       ));
+
+      // Attempt to register FCM token
+      try {
+        final token = await FCMService().getToken();
+        if (token != null) {
+          await ApiClient.instance.post('/users/fcm-token', data: {'token': token});
+        }
+      } catch (_) {
+        // Silently fail if FCM token update fails
+      }
+
     } catch (e) {
       emit(state.copyWith(isLoading: false, error: e.toString()));
     }
@@ -56,6 +69,21 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       });
     } catch (e) {
       // Background failure - could revert here if needed, but keeping it simple
+    }
+  }
+
+  Future<void> _onUploadAvatar(UploadAvatar event, Emitter<ProfileState> emit) async {
+    emit(state.copyWith(isLoading: true, error: null));
+    
+    try {
+      final avatarUrl = await _repository.uploadAvatar(event.filePath);
+      
+      final updatedProfile = Map<String, dynamic>.from(state.userProfile ?? {});
+      updatedProfile['avatarUrl'] = avatarUrl;
+      
+      emit(state.copyWith(isLoading: false, userProfile: updatedProfile, error: 'SUCCESS: $avatarUrl'));
+    } catch (e) {
+      emit(state.copyWith(isLoading: false, error: 'FAIL: ${e.toString()}'));
     }
   }
 }

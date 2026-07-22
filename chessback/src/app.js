@@ -39,6 +39,9 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // ─── Routes ───────────────────────────────────────────────────────────────
+const path = require('path');
+app.use('/avatars', express.static(path.join(__dirname, '..', 'public', 'avatars')));
+
 const authRoutes = require('./modules/auth/authRoutes');
 const leaderboardRoutes = require('./modules/leaderboard/leaderboardRoutes');
 const userRoutes = require('./modules/users/userRoutes');
@@ -50,6 +53,7 @@ const gameModeAdminRoutes = require('./modules/matchmaking/gameModeAdminRoutes')
 const bannerAdminRoutes = require('./modules/banners/bannerAdminRoutes');
 const tournamentAdminRoutes = require('./modules/tournaments/tournamentAdminRoutes');
 const userAdminRoutes = require('./modules/users/userAdminRoutes');
+const supportAdminRoutes = require('./modules/support/supportAdminRoutes');
 const settingsRoutes = require('./modules/settings/settingsRoutes');
 
 app.get('/', (req, res) => res.status(200).send(`<h1>🚀 Chess Platform Backend is running!</h1>`));
@@ -63,12 +67,14 @@ app.use('/api/wallet', walletRoutes);
 app.use('/api/tournaments', tournamentRoutes);
 app.use('/api/banners', bannerRoutes);
 app.use('/api/support', require('./modules/support/supportRoutes'));
+app.use('/api/notifications', require('./modules/notifications/notificationRoutes'));
 
 // Admin Routes (Modularized)
 app.use('/api/admin/gamemodes', gameModeAdminRoutes);
 app.use('/api/admin/banners', bannerAdminRoutes);
 app.use('/api/admin/tournaments', tournamentAdminRoutes);
 app.use('/api/admin/users', userAdminRoutes);
+app.use('/api/admin/support', supportAdminRoutes);
 
 // Settings Routes
 app.use('/api/settings', settingsRoutes);

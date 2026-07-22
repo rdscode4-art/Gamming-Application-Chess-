@@ -125,9 +125,16 @@ final GoRouter appRouter = GoRouter(
         ),
         GoRoute(
           path: AppRoutes.profile,
-          builder: (context, state) => BlocProvider(
-            create: (_) => getIt<ProfileBloc>()..add(LoadProfile()),
+          builder: (context, state) => BlocProvider.value(
+            value: getIt<ProfileBloc>()..add(LoadProfile()),
             child: const ProfileScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.tournamentsList,
+          builder: (context, state) => BlocProvider(
+            create: (_) => getIt<TournamentBloc>()..add(LoadTournaments()),
+            child: const TournamentsListScreen(),
           ),
         ),
       ],
@@ -173,13 +180,7 @@ final GoRouter appRouter = GoRouter(
         child: const CreateTournamentScreen(),
       ),
     ),
-    GoRoute(
-      path: AppRoutes.tournamentsList,
-      builder: (context, state) => BlocProvider.value(
-        value: getIt<TournamentBloc>(),
-        child: const TournamentsListScreen(),
-      ),
-    ),
+
     GoRoute(
       path: AppRoutes.victory,
       builder: (context, state) {
@@ -210,7 +211,10 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: AppRoutes.settings,
-      builder: (context, state) => const SettingsScreen(),
+      builder: (context, state) => BlocProvider.value(
+        value: getIt<ProfileBloc>(),
+        child: const SettingsScreen(),
+      ),
     ),
     GoRoute(
       path: AppRoutes.legal,
@@ -224,7 +228,10 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: AppRoutes.referral,
-      builder: (context, state) => const ReferralScreen(),
+      builder: (context, state) => BlocProvider.value(
+        value: getIt<ProfileBloc>(),
+        child: const ReferralScreen(),
+      ),
     ),
     GoRoute(
       path: AppRoutes.notifications,
