@@ -102,7 +102,7 @@ class VictoryScreen extends StatelessWidget {
     
     final elo = gameResult!['eloChanges'];
     if (elo != null && elo[myColorStr] != null) {
-      final delta = elo[myColorStr]['delta'];
+      final delta = elo[myColorStr]['delta'] ?? 0;
       if (delta > 0) {
         ratingChangeStr = '+$delta';
         ratingColor = AppColors.green;

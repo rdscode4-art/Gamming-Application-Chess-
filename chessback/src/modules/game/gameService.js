@@ -240,20 +240,23 @@ class GameService {
     logger.info(`Player ${userId} disconnected from room ${roomId}. Starting forfeit timer.`);
     io.to(roomId).emit(SOCKET_EVENTS.OPPONENT_DISCONNECTED, { userId, timeout: DISCONNECT_TIMEOUT });
 
+    const disconnectTime = Date.now().toString();
     // Store disconnect time in Redis so we can check on reconnect
     await redisService.redisClient.set(
       `${REDIS_KEYS.DISCONNECT_TIMER_PREFIX}${userId}`,
-      Date.now().toString(),
-      { EX: DISCONNECT_TIMEOUT + 5 } // expire slightly after timeout
+      disconnectTime,
+      { EX: DISCONNECT_TIMEOUT * 2 } // expire safely after timeout
     );
 
     // Schedule forfeit after DISCONNECT_TIMEOUT seconds
     setTimeout(async () => {
-      // Check if still disconnected
-      const stillDisconnected = await redisService.redisClient.get(
+      // Check if still disconnected WITH THE SAME TIMESTAMP
+      const stillDisconnectedTimestamp = await redisService.redisClient.get(
         `${REDIS_KEYS.DISCONNECT_TIMER_PREFIX}${userId}`
       );
-      if (!stillDisconnected) return; // They reconnected
+      
+      // If the key is gone, or if the timestamp has changed (meaning they reconnected and disconnected again), ignore this old timer.
+      if (!stillDisconnectedTimestamp || stillDisconnectedTimestamp !== disconnectTime) return; 
 
       const currentRoom = await redisService.getJSON(`${REDIS_KEYS.ROOM_PREFIX}${roomId}`);
       if (currentRoom && currentRoom.status === 'active') {
@@ -266,7 +269,47 @@ class GameService {
   // ─── Handle Reconnect ───────────────────────────────────────────────────────
   async handleReconnect(userId, socket, io) {
     const roomId = await redisService.getJSON(`${REDIS_KEYS.USER_SESSION_PREFIX}${userId}`);
-    if (!roomId) return;
+    if (!roomId) {
+      // If no active session, they probably forfeited or the game ended while they were offline.
+      // Fetch their most recent game and send GAME_OVER so the frontend can route to victory screen.
+      try {
+        const User = require('../../models/User');
+        const Game = require('../../models/Game');
+        
+        const userObj = await User.findOne({ userId });
+        if (userObj) {
+          const recentGame = await Game.findOne({
+            $or: [{ whitePlayer: userObj._id }, { blackPlayer: userObj._id }]
+          })
+          .sort({ createdAt: -1 })
+          .populate('whitePlayer blackPlayer');
+          
+          if (recentGame) {
+            socket.emit(SOCKET_EVENTS.GAME_OVER, {
+              winner: recentGame.winner,
+              reason: recentGame.reason,
+              whitePlayer: recentGame.whitePlayer, // Now populated with User doc
+              blackPlayer: recentGame.blackPlayer, // Now populated with User doc
+              eloChanges: recentGame.isRated ? {
+                white: { 
+                  before: recentGame.whiteRatingBefore, 
+                  after: recentGame.whiteRatingAfter,
+                  delta: (recentGame.whiteRatingAfter || 0) - (recentGame.whiteRatingBefore || 0)
+                },
+                black: { 
+                  before: recentGame.blackRatingBefore, 
+                  after: recentGame.blackRatingAfter,
+                  delta: (recentGame.blackRatingAfter || 0) - (recentGame.blackRatingBefore || 0)
+                }
+              } : null
+            });
+          }
+        }
+      } catch (e) {
+        logger.error(`Error fetching recent game on reconnect: ${e.message}`);
+      }
+      return;
+    }
 
     const room = await redisService.getJSON(`${REDIS_KEYS.ROOM_PREFIX}${roomId}`);
     if (!room) return;

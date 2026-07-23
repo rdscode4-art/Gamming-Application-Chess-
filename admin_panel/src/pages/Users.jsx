@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Ban, Edit2, CheckCircle } from 'lucide-react';
 
-const API_URL = 'http://localhost:7893/api/admin/users';
+const API_URL = 'https://chessback.ridealdigitalseva.com/api/admin/users';
 
 const Users = () => {
   const [users, setUsers] = useState([]);
@@ -80,7 +80,7 @@ const Users = () => {
                 <td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <div style={{
-                      width: '40px', height: '40px', borderRadius: '50%', 
+                      width: '40px', height: '40px', borderRadius: '50%',
                       background: 'var(--primary-gold)', color: '#000',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontWeight: 'bold', fontSize: '18px'
@@ -127,8 +127,8 @@ const Users = () => {
                     <button className="glass-button" onClick={() => openWalletModal(user)} title="Edit Wallet">
                       <Edit2 size={16} />
                     </button>
-                    <button 
-                      className="glass-button" 
+                    <button
+                      className="glass-button"
                       onClick={() => handleToggleBan(user._id, user.isBanned)}
                       title={user.isBanned ? "Unban User" : "Ban User"}
                     >
@@ -148,19 +148,19 @@ const Users = () => {
             <div className="modal-header">
               <h2 className="modal-title">Edit Wallet: {selectedUser?.username}</h2>
             </div>
-            
+
             <form onSubmit={handleWalletSubmit}>
               <div className="form-group">
                 <label className="form-label">Deposit Balance (₹)</label>
-                <input type="number" className="glass-input" value={walletData.depositBalance} onChange={e => setWalletData({...walletData, depositBalance: Number(e.target.value)})} required />
+                <input type="number" className="glass-input" value={walletData.depositBalance} onChange={e => setWalletData({ ...walletData, depositBalance: Number(e.target.value) })} required />
               </div>
               <div className="form-group">
                 <label className="form-label">Winnings Balance (₹)</label>
-                <input type="number" className="glass-input" value={walletData.winningsBalance} onChange={e => setWalletData({...walletData, winningsBalance: Number(e.target.value)})} required />
+                <input type="number" className="glass-input" value={walletData.winningsBalance} onChange={e => setWalletData({ ...walletData, winningsBalance: Number(e.target.value) })} required />
               </div>
               <div className="form-group">
                 <label className="form-label">Bonus Balance (₹)</label>
-                <input type="number" className="glass-input" value={walletData.bonusBalance} onChange={e => setWalletData({...walletData, bonusBalance: Number(e.target.value)})} required />
+                <input type="number" className="glass-input" value={walletData.bonusBalance} onChange={e => setWalletData({ ...walletData, bonusBalance: Number(e.target.value) })} required />
               </div>
 
               <div className="form-actions">

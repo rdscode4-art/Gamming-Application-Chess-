@@ -1,6 +1,7 @@
 require('dotenv').config();
 const http = require('http');
 const app = require('./app');
+app.set('trust proxy', 1);
 const connectDB = require('./config/db');
 const logger = require('./config/logger');
 const initSocket = require('./socket/socketManager');

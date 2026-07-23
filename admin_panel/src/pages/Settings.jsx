@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Save } from 'lucide-react';
 
-const API_URL = 'http://localhost:7893/api/settings';
-const ADMIN_TOKEN = localStorage.getItem('adminToken') || ''; 
+const API_URL = 'https://chessback.ridealdigitalseva.com/api/settings';
+const ADMIN_TOKEN = localStorage.getItem('adminToken') || '';
 
 function Settings() {
   const [commission, setCommission] = useState(10);
@@ -73,9 +73,9 @@ function Settings() {
               onChange={(e) => setCommission(Number(e.target.value))}
               style={{ flex: 1 }}
             />
-            <span style={{ 
-              fontWeight: 'bold', 
-              fontSize: '18px', 
+            <span style={{
+              fontWeight: 'bold',
+              fontSize: '18px',
               minWidth: '40px',
               color: 'var(--accent-gold)'
             }}>
@@ -84,8 +84,8 @@ function Settings() {
           </div>
         </div>
 
-        <button 
-          className="glass-button primary" 
+        <button
+          className="glass-button primary"
           onClick={handleSave}
           disabled={isLoading}
         >
@@ -93,10 +93,10 @@ function Settings() {
         </button>
 
         {message && (
-          <div style={{ 
-            marginTop: '16px', 
-            padding: '12px', 
-            borderRadius: '8px', 
+          <div style={{
+            marginTop: '16px',
+            padding: '12px',
+            borderRadius: '8px',
             backgroundColor: message.includes('Error') ? 'rgba(255, 82, 82, 0.1)' : 'rgba(76, 175, 80, 0.1)',
             color: message.includes('Error') ? '#FF5252' : '#4CAF50'
           }}>

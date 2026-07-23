@@ -40,7 +40,12 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     _setupSocketListeners();
   }
 
+  void _rejoinGame() {
+    add(GameRejoin());
+  }
+
   void _setupSocketListeners() {
+    _socket.addConnectListener(_rejoinGame);
     _socket.listen(AppConstants.moveAccepted, (data) => add(GameSocketMoveAccepted(data)));
     _socket.listen(AppConstants.clockUpdate, (data) => add(GameSocketClockUpdate(data)));
     _socket.listen(AppConstants.gameOver, (data) => add(GameSocketGameOver(data)));
@@ -258,6 +263,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
 
   @override
   Future<void> close() {
+    _socket.removeConnectListener(_rejoinGame);
     _localTicker?.cancel();
     _disconnectTimer?.cancel();
     _socket.off(AppConstants.moveAccepted);

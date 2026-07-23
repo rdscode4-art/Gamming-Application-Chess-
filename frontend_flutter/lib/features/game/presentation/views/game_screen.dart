@@ -12,7 +12,9 @@ import '../blocs/game_state.dart';
 import '../../../../routes/app_router.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
+import '../../../../core/services/socket_service.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:vibration/vibration.dart';
 import '../../../profile/presentation/blocs/profile_bloc.dart';
 import '../../../profile/presentation/blocs/profile_state.dart';
 import '../../../profile/presentation/blocs/profile_event.dart';
@@ -25,7 +27,7 @@ class GameScreen extends StatefulWidget {
   State<GameScreen> createState() => _GameScreenState();
 }
 
-class _GameScreenState extends State<GameScreen> {
+class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   late ChessBoardController chessController;
   final AudioPlayer _audioPlayer = AudioPlayer()..setPlayerMode(PlayerMode.lowLatency);
 
@@ -37,9 +39,6 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _playFeedback() async {
-    if (_getPref(context, 'moveVibration', true)) {
-      HapticFeedback.mediumImpact();
-    }
     if (_getPref(context, 'gameSounds', true)) {
       try {
         if (_audioPlayer.state == PlayerState.playing) {
@@ -55,6 +54,7 @@ class _GameScreenState extends State<GameScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     chessController = ChessBoardController();
     if (widget.matchData != null) {
       context.read<GameBloc>().add(GameInitData(widget.matchData!));
@@ -62,7 +62,17 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      debugPrint('📱 App Resumed. Forcing socket reconnect and game rejoin...');
+      SocketService().reconnect();
+      context.read<GameBloc>().add(GameRejoin());
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _audioPlayer.dispose();
     super.dispose();
   }
@@ -76,6 +86,14 @@ class _GameScreenState extends State<GameScreen> {
         if (state.fen != null && state.fen != chessController.game.fen) {
           chessController.loadFen(state.fen!);
           _playFeedback();
+          
+          if (state.isMyTurn && _getPref(context, 'moveVibration', true)) {
+            HapticFeedback.vibrate();
+            HapticFeedback.heavyImpact();
+            try {
+              Vibration.vibrate(duration: 200);
+            } catch (_) {}
+          }
         }
         if (state.isGameOver) {
           // Route to victory screen immediately
@@ -135,9 +153,19 @@ class _GameScreenState extends State<GameScreen> {
                     // Opponent Row
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
+                      child: PulseAnimation(
+                        active: !state.isMyTurn && !state.isGameOver,
+                        color: AppColors.red,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: !state.isMyTurn && !state.isGameOver ? Theme.of(context).brightness == Brightness.dark ? AppColors.red.withValues(alpha: 0.1) : AppColors.red.withValues(alpha: 0.05) : Colors.transparent,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: !state.isMyTurn && !state.isGameOver ? AppColors.red.withValues(alpha: 0.5) : Colors.transparent, width: 2),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
                           Row(
                             children: [
                               AvatarBadge(name: state.opponentName.isNotEmpty ? state.opponentName : 'Opponent', size: 40, rating: state.opponentRating),
@@ -168,7 +196,8 @@ class _GameScreenState extends State<GameScreen> {
                         ],
                       ),
                     ),
-                    
+                  ),
+                ),
                     // Opponent captures
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -227,9 +256,19 @@ class _GameScreenState extends State<GameScreen> {
                     // Player Row
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
+                      child: PulseAnimation(
+                        active: state.isMyTurn && !state.isGameOver,
+                        color: AppColors.green,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: state.isMyTurn && !state.isGameOver ? Theme.of(context).brightness == Brightness.dark ? AppColors.green.withValues(alpha: 0.1) : AppColors.green.withValues(alpha: 0.05) : Colors.transparent,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: state.isMyTurn && !state.isGameOver ? AppColors.green.withValues(alpha: 0.5) : Colors.transparent, width: 2),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
                           Row(
                             children: [
                               AvatarBadge(name: state.myUsername.isNotEmpty ? state.myUsername : 'You', size: 40, rating: state.myRating),
@@ -271,7 +310,8 @@ class _GameScreenState extends State<GameScreen> {
                         ],
                       ),
                     ),
-
+                  ),
+                ),
                     // Action bar
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -620,3 +660,69 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 }
+
+class PulseAnimation extends StatefulWidget {
+  final Widget child;
+  final bool active;
+  final Color color;
+  const PulseAnimation({Key? key, required this.child, required this.active, required this.color}) : super(key: key);
+
+  @override
+  State<PulseAnimation> createState() => _PulseAnimationState();
+}
+
+class _PulseAnimationState extends State<PulseAnimation> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
+    if (widget.active) _controller.repeat(reverse: true);
+  }
+
+  @override
+  void didUpdateWidget(PulseAnimation oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.active != oldWidget.active) {
+      if (widget.active) {
+        _controller.repeat(reverse: true);
+      } else {
+        _controller.stop();
+        _controller.value = 0.0;
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: widget.active
+                ? [
+                    BoxShadow(
+                      color: widget.color.withValues(alpha: 0.1 + (_controller.value * 0.4)),
+                      blurRadius: 10 + (_controller.value * 20),
+                      spreadRadius: _controller.value * 5,
+                    )
+                  ]
+                : [],
+          ),
+          child: child,
+        );
+      },
+      child: widget.child,
+    );
+  }
+}
+

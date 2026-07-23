@@ -105,11 +105,11 @@ class WalletBloc extends Bloc<WalletEvent, WalletState> {
 
   Future<void> _onWithdrawMoney(WalletWithdrawMoney event, Emitter<WalletState> emit) async {
     if (event.amount < 100) {
-      emit(state.copyWith(errorMessage: 'Minimum withdrawal is ₹100', clearMessages: true));
+      emit(state.copyWith(errorMessage: 'Minimum withdrawal is ₹100'));
       return;
     }
     if (event.amount > state.winningsBalance) {
-      emit(state.copyWith(errorMessage: 'You can only withdraw from Winnings Balance (₹${state.winningsBalance})', clearMessages: true));
+      emit(state.copyWith(errorMessage: 'You can only withdraw from Winnings Balance (₹${state.winningsBalance})'));
       return;
     }
 
@@ -124,7 +124,6 @@ class WalletBloc extends Bloc<WalletEvent, WalletState> {
       if (res != null) {
         emit(state.copyWith(
           successMessage: 'Your request for ₹${event.amount} has been submitted.',
-          clearMessages: true,
         ));
         add(WalletFetchData());
       }
@@ -132,7 +131,6 @@ class WalletBloc extends Bloc<WalletEvent, WalletState> {
       emit(state.copyWith(
         isActionLoading: false,
         errorMessage: 'Failed to request withdrawal.',
-        clearMessages: true,
       ));
     }
   }
@@ -148,14 +146,12 @@ class WalletBloc extends Bloc<WalletEvent, WalletState> {
       if (res != null) {
         emit(state.copyWith(
           successMessage: 'Payment successful. Balance updated.',
-          clearMessages: true,
         ));
         add(WalletFetchData());
       }
     } catch (e) {
       emit(state.copyWith(
         errorMessage: 'Payment verification failed on our server. Please contact support.',
-        clearMessages: true,
       ));
     }
   }
@@ -172,7 +168,7 @@ class WalletBloc extends Bloc<WalletEvent, WalletState> {
       } catch (_) {}
     }
     
-    emit(state.copyWith(errorMessage: event.message, clearMessages: true, lastOrderId: null));
+    emit(state.copyWith(errorMessage: event.message, lastOrderId: null));
     add(WalletFetchData());
   }
 

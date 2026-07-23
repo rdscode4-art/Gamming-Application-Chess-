@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
 
-const API_URL = 'http://localhost:7893/api/admin/banners';
+const API_URL = 'https://chessback.ridealdigitalseva.com/api/admin/banners';
 
 const Banners = () => {
   const [banners, setBanners] = useState([]);
@@ -118,31 +118,31 @@ const Banners = () => {
             <div className="modal-header">
               <h2 className="modal-title">{formData._id ? 'Edit Banner' : 'New Banner'}</h2>
             </div>
-            
+
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label className="form-label">Title (Main Heading)</label>
-                <input className="glass-input" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} required />
+                <input className="glass-input" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} required />
               </div>
               <div className="form-group">
                 <label className="form-label">Subtitle (Subtext)</label>
-                <input className="glass-input" value={formData.subtitle} onChange={e => setFormData({...formData, subtitle: e.target.value})} required />
+                <input className="glass-input" value={formData.subtitle} onChange={e => setFormData({ ...formData, subtitle: e.target.value })} required />
               </div>
-              
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div className="form-group">
                   <label className="form-label">Button CTA Text</label>
-                  <input className="glass-input" value={formData.cta} onChange={e => setFormData({...formData, cta: e.target.value})} required />
+                  <input className="glass-input" value={formData.cta} onChange={e => setFormData({ ...formData, cta: e.target.value })} required />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Background Hex Color</label>
-                  <input className="glass-input" value={formData.color} onChange={e => setFormData({...formData, color: e.target.value})} required />
+                  <input className="glass-input" value={formData.color} onChange={e => setFormData({ ...formData, color: e.target.value })} required />
                 </div>
               </div>
 
               <div style={{ display: 'flex', gap: '24px', marginTop: '16px' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <input type="checkbox" checked={formData.isActive} onChange={e => setFormData({...formData, isActive: e.target.checked})} />
+                  <input type="checkbox" checked={formData.isActive} onChange={e => setFormData({ ...formData, isActive: e.target.checked })} />
                   Is Active
                 </label>
               </div>

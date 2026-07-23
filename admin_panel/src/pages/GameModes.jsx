@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
 
-const API_URL = 'http://localhost:7893/api/admin/gamemodes';
+const API_URL = 'https://chessback.ridealdigitalseva.com/api/admin/gamemodes';
 
 const GameModes = () => {
   const [modes, setModes] = useState([]);
@@ -116,21 +116,21 @@ const GameModes = () => {
             <div className="modal-header">
               <h2 className="modal-title">{formData._id ? 'Edit Mode' : 'New Mode'}</h2>
             </div>
-            
+
             <form onSubmit={handleSubmit}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div className="form-group">
                   <label className="form-label">Mode ID (e.g. paid_50)</label>
-                  <input className="glass-input" value={formData.modeId} onChange={e => setFormData({...formData, modeId: e.target.value})} required />
+                  <input className="glass-input" value={formData.modeId} onChange={e => setFormData({ ...formData, modeId: e.target.value })} required />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Label (e.g. ₹50 Match)</label>
-                  <input className="glass-input" value={formData.label} onChange={e => setFormData({...formData, label: e.target.value})} required />
+                  <input className="glass-input" value={formData.label} onChange={e => setFormData({ ...formData, label: e.target.value })} required />
                 </div>
-                
+
                 <div className="form-group">
                   <label className="form-label">Time Control</label>
-                  <select className="glass-input" value={formData.timeControl} onChange={e => setFormData({...formData, timeControl: e.target.value})}>
+                  <select className="glass-input" value={formData.timeControl} onChange={e => setFormData({ ...formData, timeControl: e.target.value })}>
                     <option value="rapid_3">Bullet 3+0</option>
                     <option value="rapid_5">Blitz 5+0</option>
                     <option value="rapid_10">Rapid 10+0</option>
@@ -140,26 +140,26 @@ const GameModes = () => {
                 </div>
                 <div className="form-group">
                   <label className="form-label">Tag Badge (e.g. ₹50 or Free)</label>
-                  <input className="glass-input" value={formData.tag} onChange={e => setFormData({...formData, tag: e.target.value})} />
+                  <input className="glass-input" value={formData.tag} onChange={e => setFormData({ ...formData, tag: e.target.value })} />
                 </div>
 
                 <div className="form-group">
                   <label className="form-label">Entry Fee (₹)</label>
-                  <input type="number" className="glass-input" value={formData.entryFee} onChange={e => setFormData({...formData, entryFee: Number(e.target.value)})} />
+                  <input type="number" className="glass-input" value={formData.entryFee} onChange={e => setFormData({ ...formData, entryFee: Number(e.target.value) })} />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Prize Pool (₹)</label>
-                  <input type="number" className="glass-input" value={formData.prize} onChange={e => setFormData({...formData, prize: Number(e.target.value)})} />
+                  <input type="number" className="glass-input" value={formData.prize} onChange={e => setFormData({ ...formData, prize: Number(e.target.value) })} />
                 </div>
               </div>
 
               <div style={{ display: 'flex', gap: '24px', marginTop: '16px' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <input type="checkbox" checked={formData.isActive} onChange={e => setFormData({...formData, isActive: e.target.checked})} />
+                  <input type="checkbox" checked={formData.isActive} onChange={e => setFormData({ ...formData, isActive: e.target.checked })} />
                   Is Active (Visible in App)
                 </label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <input type="checkbox" checked={formData.isRated} onChange={e => setFormData({...formData, isRated: e.target.checked})} />
+                  <input type="checkbox" checked={formData.isRated} onChange={e => setFormData({ ...formData, isRated: e.target.checked })} />
                   Is Rated (Affects ELO)
                 </label>
               </div>

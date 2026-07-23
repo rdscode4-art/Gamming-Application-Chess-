@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Headset, CheckCircle, Clock, XCircle, Send } from 'lucide-react';
 
-const API_URL = 'http://localhost:7893/api/admin/support';
+const API_URL = 'https://chessback.ridealdigitalseva.com/api/admin/support';
 const ADMIN_TOKEN = localStorage.getItem('adminToken') || '';
 
 function Support() {
@@ -112,8 +112,8 @@ function Support() {
               ) : tickets.length === 0 ? (
                 <tr><td colSpan="5" style={{ textAlign: 'center' }}>No tickets found</td></tr>
               ) : tickets.map((t) => (
-                <tr 
-                  key={t._id} 
+                <tr
+                  key={t._id}
                   onClick={() => fetchTicketDetails(t._id)}
                   style={{ cursor: 'pointer', backgroundColor: selectedTicket?._id === t._id ? 'rgba(255,255,255,0.05)' : 'transparent' }}
                 >
@@ -140,13 +140,13 @@ function Support() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <select 
-                    value={selectedTicket.status} 
+                  <select
+                    value={selectedTicket.status}
                     onChange={(e) => handleStatusChange(selectedTicket._id, e.target.value)}
-                    style={{ 
-                      padding: '6px 12px', 
-                      borderRadius: '8px', 
-                      backgroundColor: 'rgba(255,255,255,0.1)', 
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(255,255,255,0.1)',
                       color: 'white',
                       border: 'none',
                       outline: 'none'
@@ -163,7 +163,7 @@ function Support() {
 
             <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {selectedTicket.replies?.map((reply, index) => (
-                <div key={index} style={{ 
+                <div key={index} style={{
                   alignSelf: reply.authorRole === 'admin' ? 'flex-end' : 'flex-start',
                   backgroundColor: reply.authorRole === 'admin' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255,255,255,0.1)',
                   padding: '12px 16px',
@@ -188,18 +188,18 @@ function Support() {
                 value={replyMessage}
                 onChange={(e) => setReplyMessage(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleReply()}
-                style={{ 
-                  flex: 1, 
-                  padding: '12px', 
-                  borderRadius: '8px', 
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  borderRadius: '8px',
                   backgroundColor: 'rgba(0,0,0,0.2)',
                   border: '1px solid rgba(255,255,255,0.1)',
                   color: 'white',
                   outline: 'none'
                 }}
               />
-              <button 
-                className="glass-button primary" 
+              <button
+                className="glass-button primary"
                 onClick={handleReply}
                 disabled={isSubmitting || !replyMessage.trim()}
                 style={{ padding: '0 20px' }}

@@ -1,5 +1,6 @@
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:logger/logger.dart';
+import 'dart:ui';
 import '../constants/app_constants.dart';
 import 'storage_service.dart';
 
@@ -15,6 +16,18 @@ class SocketService {
   static const int _maxReconnectAttempts = 5;
 
   bool get isConnected => _socket?.connected ?? false;
+
+  final List<VoidCallback> _connectListeners = [];
+
+  void addConnectListener(VoidCallback listener) {
+    if (!_connectListeners.contains(listener)) {
+      _connectListeners.add(listener);
+    }
+  }
+
+  void removeConnectListener(VoidCallback listener) {
+    _connectListeners.remove(listener);
+  }
 
   // ─── Connect ─────────────────────────────────────────────────────────────
   void connect() {
@@ -46,6 +59,9 @@ class SocketService {
     _socket!.onConnect((_) {
       _reconnectAttempts = 0;
       _logger.i('✅ Socket Connected: ${AppConstants.baseUrl}');
+      for (var listener in _connectListeners) {
+        listener();
+      }
     });
 
     _socket!.onDisconnect((reason) {
@@ -54,6 +70,9 @@ class SocketService {
 
     _socket!.onReconnect((attempt) {
       _logger.i('🔄 Socket Reconnected after $attempt attempt(s)');
+      for (var listener in _connectListeners) {
+        listener();
+      }
     });
 
     _socket!.onReconnectAttempt((attempt) {

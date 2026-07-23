@@ -37,6 +37,8 @@ import '../features/home/presentation/blocs/leaderboard_event.dart';
 import '../features/tournament/presentation/blocs/tournament_bloc.dart';
 import '../features/tournament/presentation/blocs/tournament_event.dart';
 import '../features/home/presentation/blocs/home_bloc.dart';
+import '../features/notifications/presentation/blocs/notification_bloc.dart';
+import '../features/notifications/presentation/blocs/notification_event.dart';
 
 class AppRoutes {
   static const splash = '/splash';
@@ -105,6 +107,7 @@ final GoRouter appRouter = GoRouter(
               BlocProvider.value(value: getIt<WalletBloc>()),
               BlocProvider(create: (_) => getIt<TournamentBloc>()..add(LoadTournaments())),
               BlocProvider(create: (_) => getIt<HomeBloc>()),
+              BlocProvider(create: (_) => getIt<NotificationBloc>()..add(LoadNotifications())),
             ],
             child: const HomeScreen(),
           ),

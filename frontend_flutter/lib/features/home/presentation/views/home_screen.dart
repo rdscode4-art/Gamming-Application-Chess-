@@ -17,6 +17,8 @@ import '../../../tournament/presentation/blocs/tournament_bloc.dart';
 import '../../../tournament/presentation/blocs/tournament_state.dart';
 import '../blocs/home_bloc.dart';
 import '../blocs/home_state.dart';
+import '../../../notifications/presentation/blocs/notification_bloc.dart';
+import '../../../notifications/presentation/blocs/notification_state.dart';
 import 'package:intl/intl.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -120,23 +122,32 @@ class _HomeScreenState extends State<HomeScreen> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? AppColors.glassBorder : Colors.black.withValues(alpha: 0.1)),
                   ),
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Icon(Icons.notifications, color: context.textPrimary, size: 18),
-                      Positioned(
-                        top: 0,
-                        right: 0,
-                        child: Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: AppColors.red,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
-                    ],
+                  child: BlocBuilder<NotificationBloc, NotificationState>(
+                    builder: (context, notifState) {
+                      bool hasUnread = false;
+                      if (notifState is NotificationLoaded) {
+                        hasUnread = notifState.notifications.any((n) => !n.isRead);
+                      }
+                      return Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Icon(Icons.notifications, color: context.textPrimary, size: 18),
+                          if (hasUnread)
+                            Positioned(
+                              top: 0,
+                              right: 0,
+                              child: Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ),

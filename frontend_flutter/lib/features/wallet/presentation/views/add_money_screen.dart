@@ -18,8 +18,15 @@ class AddMoneyScreen extends StatefulWidget {
 class _AddMoneyScreenState extends State<AddMoneyScreen> {
   int _selectedAmount = 500;
   String _selectedMethod = 'UPI';
+  final TextEditingController _amountController = TextEditingController(text: '500');
 
   final List<int> _amounts = [100, 500, 1000, 5000];
+
+  @override
+  void dispose() {
+    _amountController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -117,10 +124,24 @@ class _AddMoneyScreenState extends State<AddMoneyScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text('₹', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 32, fontWeight: FontWeight.bold)),
-              const SizedBox(width: 12),
-              Text(
-                '$_selectedAmount',
-                style: TextStyle(color: context.textPrimary, fontSize: 48, fontWeight: FontWeight.w900, fontFamily: 'Rajdhani'),
+              const SizedBox(width: 8),
+              IntrinsicWidth(
+                child: TextField(
+                  controller: _amountController,
+                  keyboardType: TextInputType.number,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: context.textPrimary, fontSize: 48, fontWeight: FontWeight.w900, fontFamily: 'Rajdhani'),
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  onChanged: (val) {
+                    setState(() {
+                      _selectedAmount = int.tryParse(val) ?? 0;
+                    });
+                  },
+                ),
               ),
             ],
           ),
@@ -130,7 +151,12 @@ class _AddMoneyScreenState extends State<AddMoneyScreen> {
             children: _amounts.map((amt) {
               final isSelected = _selectedAmount == amt;
               return GestureDetector(
-                onTap: () => setState(() => _selectedAmount = amt),
+                onTap: () {
+                  setState(() {
+                    _selectedAmount = amt;
+                    _amountController.text = amt.toString();
+                  });
+                },
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   decoration: BoxDecoration(

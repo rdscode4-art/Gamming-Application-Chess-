@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
 
-const API_URL = 'http://localhost:7893/api/admin/tournaments';
+const API_URL = 'https://chessback.ridealdigitalseva.com/api/admin/tournaments';
 
 const Tournaments = () => {
   const [tournaments, setTournaments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
+
   // Format dates for input type="datetime-local"
   const formatDateForInput = (dateStr) => {
     if (!dateStr) return '';
@@ -39,7 +39,7 @@ const Tournaments = () => {
     e.preventDefault();
     try {
       const submitData = { ...formData, startTime: new Date(formData.startTime).toISOString() };
-      
+
       if (formData._id) {
         await axios.put(`${API_URL}/${formData._id}`, submitData);
       } else {
@@ -91,22 +91,22 @@ const Tournaments = () => {
       weights.push(w);
       totalWeight += w;
     }
-    
+
     let dist = weights.map(w => {
       let exact = (w / totalWeight) * 100;
       return { floor: Math.floor(exact), remainder: exact - Math.floor(exact) };
     });
-    
+
     let sum = dist.reduce((a, b) => a + b.floor, 0);
     let needed = 100 - sum;
-    
+
     // Sort indices by largest remainder
     let indices = dist.map((_, i) => i).sort((a, b) => dist[b].remainder - dist[a].remainder);
-    
+
     for (let i = 0; i < needed; i++) {
       dist[indices[i]].floor += 1;
     }
-    
+
     setFormData({ ...formData, customDistribution: dist.map(d => d.floor) });
   };
 
@@ -166,24 +166,24 @@ const Tournaments = () => {
             <div className="modal-header">
               <h2 className="modal-title">{formData._id ? 'Edit Tournament' : 'New Tournament'}</h2>
             </div>
-            
+
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label className="form-label">Tournament Name</label>
-                <input className="glass-input" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required />
+                <input className="glass-input" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
               </div>
-              
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div className="form-group">
                   <label className="form-label">Format</label>
-                  <select className="glass-input" value={formData.format} onChange={e => setFormData({...formData, format: e.target.value})}>
+                  <select className="glass-input" value={formData.format} onChange={e => setFormData({ ...formData, format: e.target.value })}>
                     <option value="knockout">Knockout</option>
                     <option value="swiss">Swiss</option>
                   </select>
                 </div>
                 <div className="form-group">
                   <label className="form-label">Time Control</label>
-                  <select className="glass-input" value={formData.timeControl} onChange={e => setFormData({...formData, timeControl: e.target.value})}>
+                  <select className="glass-input" value={formData.timeControl} onChange={e => setFormData({ ...formData, timeControl: e.target.value })}>
                     <option value="rapid_3">Bullet 3+0</option>
                     <option value="rapid_5">Blitz 5+0</option>
                     <option value="rapid_10">Rapid 10+0</option>
@@ -192,7 +192,7 @@ const Tournaments = () => {
 
                 <div className="form-group">
                   <label className="form-label">Max Players</label>
-                  <select className="glass-input" value={formData.maxPlayers} onChange={e => setFormData({...formData, maxPlayers: Number(e.target.value)})}>
+                  <select className="glass-input" value={formData.maxPlayers} onChange={e => setFormData({ ...formData, maxPlayers: Number(e.target.value) })}>
                     <option value="2">2 Players</option>
                     <option value="4">4 Players</option>
                     <option value="8">8 Players</option>
@@ -205,7 +205,7 @@ const Tournaments = () => {
                 </div>
                 <div className="form-group">
                   <label className="form-label">Status</label>
-                  <select className="glass-input" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}>
+                  <select className="glass-input" value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value })}>
                     <option value="draft">Draft</option>
                     <option value="registration">Registration</option>
                     <option value="ongoing">Ongoing</option>
@@ -215,57 +215,57 @@ const Tournaments = () => {
 
                 <div className="form-group">
                   <label className="form-label">Entry Fee (₹)</label>
-                  <input type="number" className="glass-input" value={formData.entryFee} onChange={e => setFormData({...formData, entryFee: Number(e.target.value)})} />
+                  <input type="number" className="glass-input" value={formData.entryFee} onChange={e => setFormData({ ...formData, entryFee: Number(e.target.value) })} />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Commission (%)</label>
-                  <input type="number" className="glass-input" value={formData.commissionPercentage} onChange={e => setFormData({...formData, commissionPercentage: Number(e.target.value)})} />
+                  <input type="number" className="glass-input" value={formData.commissionPercentage} onChange={e => setFormData({ ...formData, commissionPercentage: Number(e.target.value) })} />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Prize Pool (₹) - Auto Calculated</label>
-                  <input type="number" className="glass-input" value={Math.floor((formData.entryFee || 0) * (formData.maxPlayers || 8) * (1 - (formData.commissionPercentage || 10)/100))} readOnly style={{ backgroundColor: 'rgba(0,0,0,0.2)', color: 'var(--text-secondary)' }} />
+                  <input type="number" className="glass-input" value={Math.floor((formData.entryFee || 0) * (formData.maxPlayers || 8) * (1 - (formData.commissionPercentage || 10) / 100))} readOnly style={{ backgroundColor: 'rgba(0,0,0,0.2)', color: 'var(--text-secondary)' }} />
                 </div>
-                
+
                 <div className="form-group" style={{ gridColumn: '1 / -1' }}>
                   <label className="form-label">Number of Winners: {(formData.customDistribution || []).length}</label>
                   <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                    <input 
-                      type="range" 
-                      min="1" 
-                      max={formData.maxPlayers || 8} 
-                      value={(formData.customDistribution || []).length} 
-                      onChange={e => handleWinnersChange(Number(e.target.value))} 
-                      style={{ flex: 1, cursor: 'pointer' }} 
+                    <input
+                      type="range"
+                      min="1"
+                      max={formData.maxPlayers || 8}
+                      value={(formData.customDistribution || []).length}
+                      onChange={e => handleWinnersChange(Number(e.target.value))}
+                      style={{ flex: 1, cursor: 'pointer' }}
                     />
                   </div>
-                  
+
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '16px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '8px', marginTop: '16px' }}>
                     {(formData.customDistribution || []).map((pct, idx) => (
                       <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <span style={{ width: '60px', fontWeight: 'bold' }}>Rank {idx + 1}</span>
-                        <input 
-                          type="number" 
-                          min="0" max="100" 
-                          className="glass-input" 
-                          style={{ width: '100px', padding: '8px' }} 
-                          value={pct} 
+                        <input
+                          type="number"
+                          min="0" max="100"
+                          className="glass-input"
+                          style={{ width: '100px', padding: '8px' }}
+                          value={pct}
                           onChange={e => {
                             let newDist = [...formData.customDistribution];
                             newDist[idx] = Number(e.target.value);
-                            setFormData({...formData, customDistribution: newDist});
-                          }} 
+                            setFormData({ ...formData, customDistribution: newDist });
+                          }}
                         />
                         <span style={{ color: 'var(--text-secondary)' }}>%</span>
                         <span style={{ color: 'var(--accent-green)', marginLeft: 'auto', fontWeight: 'bold' }}>
-                          ₹ {Math.floor(((formData.entryFee || 0) * (formData.maxPlayers || 8) * (1 - (formData.commissionPercentage || 10)/100)) * (pct / 100))}
+                          ₹ {Math.floor(((formData.entryFee || 0) * (formData.maxPlayers || 8) * (1 - (formData.commissionPercentage || 10) / 100)) * (pct / 100))}
                         </span>
                       </div>
                     ))}
-                    
+
                     <div style={{ marginTop: '12px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '12px', display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
                       <span>Total Distribution</span>
-                      <span style={{ color: (formData.customDistribution || []).reduce((a,b)=>a+b, 0) === 100 ? 'var(--accent-green)' : 'var(--accent-red)' }}>
-                        {(formData.customDistribution || []).reduce((a,b)=>a+b, 0)}%
+                      <span style={{ color: (formData.customDistribution || []).reduce((a, b) => a + b, 0) === 100 ? 'var(--accent-green)' : 'var(--accent-red)' }}>
+                        {(formData.customDistribution || []).reduce((a, b) => a + b, 0)}%
                       </span>
                     </div>
                   </div>
@@ -274,12 +274,12 @@ const Tournaments = () => {
 
               <div className="form-group" style={{ marginTop: '16px' }}>
                 <label className="form-label">Start Time</label>
-                <input type="datetime-local" className="glass-input" value={formData.startTime} onChange={e => setFormData({...formData, startTime: e.target.value})} required />
+                <input type="datetime-local" className="glass-input" value={formData.startTime} onChange={e => setFormData({ ...formData, startTime: e.target.value })} required />
               </div>
 
               <div className="form-actions">
                 <button type="button" className="glass-button" onClick={() => setIsModalOpen(false)}>Cancel</button>
-                <button type="submit" className="glass-button primary" disabled={(formData.customDistribution || []).reduce((a,b)=>a+b, 0) !== 100}>Save Tournament</button>
+                <button type="submit" className="glass-button primary" disabled={(formData.customDistribution || []).reduce((a, b) => a + b, 0) !== 100}>Save Tournament</button>
               </div>
             </form>
           </div>

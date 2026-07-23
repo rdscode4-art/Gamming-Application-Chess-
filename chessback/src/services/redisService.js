@@ -18,8 +18,17 @@ class RedisService {
       },
       set: async (key, value, options = {}) => {
         this.store.set(key, value);
+        // Clear existing timer if any
+        if (this.locks.has(key)) {
+          clearTimeout(this.locks.get(key));
+          this.locks.delete(key);
+        }
         if (options.EX) {
-          setTimeout(() => this.store.delete(key), options.EX * 1000);
+          const timer = setTimeout(() => {
+            this.store.delete(key);
+            this.locks.delete(key);
+          }, options.EX * 1000);
+          this.locks.set(key, timer);
         }
         return 'OK';
       },
@@ -27,6 +36,10 @@ class RedisService {
         return this.store.get(key) ?? null;
       },
       del: async (key) => {
+        if (this.locks.has(key)) {
+          clearTimeout(this.locks.get(key));
+          this.locks.delete(key);
+        }
         this.store.delete(key);
         return 1;
       },
