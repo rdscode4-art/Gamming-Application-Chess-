@@ -12,6 +12,8 @@ import 'firebase_options.dart';
 import 'core/services/fcm_service.dart';
 import 'features/auth/presentation/blocs/auth_bloc.dart';
 import 'core/theme/theme_cubit.dart';
+import 'features/profile/presentation/blocs/profile_bloc.dart';
+import 'features/profile/presentation/blocs/profile_event.dart';
 
 class MyHttpOverrides extends HttpOverrides {
   @override
@@ -57,6 +59,7 @@ class ChessPlatformApp extends StatelessWidget {
       providers: [
         BlocProvider<AuthBloc>(create: (_) => getIt<AuthBloc>()),
         BlocProvider<ThemeCubit>(create: (_) => ThemeCubit()),
+        BlocProvider<ProfileBloc>(create: (_) => getIt<ProfileBloc>()..add(LoadProfile())),
       ],
       child: BlocBuilder<ThemeCubit, ThemeMode>(
         builder: (context, themeMode) {

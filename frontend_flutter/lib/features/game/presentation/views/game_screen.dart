@@ -27,7 +27,7 @@ class GameScreen extends StatefulWidget {
 
 class _GameScreenState extends State<GameScreen> {
   late ChessBoardController chessController;
-  final AudioPlayer _audioPlayer = AudioPlayer();
+  final AudioPlayer _audioPlayer = AudioPlayer()..setPlayerMode(PlayerMode.lowLatency);
 
   bool _getPref(BuildContext context, String key, bool defaultValue) {
     final state = context.read<ProfileBloc>().state;
@@ -42,6 +42,9 @@ class _GameScreenState extends State<GameScreen> {
     }
     if (_getPref(context, 'gameSounds', true)) {
       try {
+        if (_audioPlayer.state == PlayerState.playing) {
+          await _audioPlayer.stop();
+        }
         await _audioPlayer.play(AssetSource('sounds/move.wav'));
       } catch (e) {
         debugPrint('Failed to play sound: $e');
@@ -143,7 +146,10 @@ class _GameScreenState extends State<GameScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(state.opponentName.isNotEmpty ? state.opponentName : 'Opponent', style: TextStyle(color: context.textPrimary, fontSize: 14, fontWeight: FontWeight.bold)),
-                                  Text('Rating: ${state.opponentRating} • Global', style: TextStyle(color: context.textSecondary, fontSize: 12)),
+                                  if (state.isDisconnected)
+                                    Text('Disconnected - Forfeits in ${state.disconnectCountdown}s', style: const TextStyle(color: AppColors.red, fontSize: 12, fontWeight: FontWeight.bold))
+                                  else
+                                    Text('Rating: ${state.opponentRating} • Global', style: TextStyle(color: context.textSecondary, fontSize: 12)),
                                 ],
                               ),
                             ],
