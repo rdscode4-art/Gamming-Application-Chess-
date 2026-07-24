@@ -13,6 +13,7 @@ import '../../../matchmaking/presentation/blocs/matchmaking_bloc.dart';
 import '../../../matchmaking/presentation/blocs/matchmaking_state.dart';
 import '../../../wallet/presentation/blocs/wallet_bloc.dart';
 import '../../../wallet/presentation/blocs/wallet_state.dart';
+import '../../../wallet/presentation/blocs/wallet_event.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../../tournament/presentation/blocs/tournament_bloc.dart';
 import '../../../tournament/presentation/blocs/tournament_state.dart';
@@ -37,6 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _checkForActiveMatch();
+    context.read<WalletBloc>().add(WalletFetchData());
   }
 
   Future<void> _checkForActiveMatch() async {
