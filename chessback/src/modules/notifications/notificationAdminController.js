@@ -1,5 +1,5 @@
-const User = require('../users/userModel');
-const Notification = require('./notificationModel');
+const User = require('../../models/User');
+const Notification = require('../../models/Notification');
 const { sendPushNotification } = require('../../config/firebaseAdmin');
 
 exports.sendNotification = async (req, res, next) => {
@@ -12,17 +12,17 @@ exports.sendNotification = async (req, res, next) => {
 
     let users = [];
     if (targetUserId && targetUserId !== 'ALL') {
-      const user = await User.findById(targetUserId).select('+fcmToken');
+      const user = await User.findById(targetUserId);
       if (!user) {
         return res.status(404).json({ status: 'fail', message: 'User not found' });
       }
       users.push(user);
     } else {
-      // Find all users who have an FCM token
-      users = await User.find({ fcmToken: { $exists: true, $ne: null } }).select('+fcmToken');
+      // Find all users who have at least one FCM token
+      users = await User.find({ 'fcmTokens.0': { $exists: true } });
     }
 
-    const fcmTokens = users.map(u => u.fcmToken).filter(Boolean);
+    const fcmTokens = users.flatMap(u => u.fcmTokens || []).filter(Boolean);
 
     // Persist notification to DB for in-app history
     const notifsToInsert = users.map(u => ({

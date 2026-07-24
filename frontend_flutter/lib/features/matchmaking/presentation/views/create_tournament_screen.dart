@@ -23,6 +23,8 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
   final _entryFeeCtrl = TextEditingController(text: '100');
   final _startDateCtrl = TextEditingController();
   final _startTimeCtrl = TextEditingController();
+  DateTime? _selectedDate;
+  TimeOfDay? _selectedTime;
 
   @override
   void dispose() {
@@ -83,6 +85,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
                                     lastDate: DateTime.now().add(const Duration(days: 365)),
                                   );
                                   if (date != null) {
+                                    _selectedDate = date;
                                     _startDateCtrl.text = '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
                                   }
                                 },
@@ -107,6 +110,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
                                     initialTime: TimeOfDay.now(),
                                   );
                                   if (time != null && context.mounted) {
+                                    _selectedTime = time;
                                     _startTimeCtrl.text = time.format(context);
                                   }
                                 },
@@ -171,12 +175,25 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
                     Fluttertoast.showToast(msg: 'Name is required');
                     return;
                   }
+                  if (_selectedDate == null || _selectedTime == null) {
+                    Fluttertoast.showToast(msg: 'Please select a start date and time');
+                    return;
+                  }
+                  final startDateTime = DateTime(
+                    _selectedDate!.year,
+                    _selectedDate!.month,
+                    _selectedDate!.day,
+                    _selectedTime!.hour,
+                    _selectedTime!.minute,
+                  );
+
                   context.read<TournamentBloc>().add(CreateTournament({
                     'name': _nameCtrl.text,
                     'timeControl': _selectedFormat,
                     'maxPlayers': _selectedPlayers,
                     'entryFee': int.tryParse(_entryFeeCtrl.text) ?? 0,
                     'isPrivate': !_isPublic,
+                    'startTime': startDateTime.toUtc().toIso8601String(),
                   }));
                 },
                 child: Container(

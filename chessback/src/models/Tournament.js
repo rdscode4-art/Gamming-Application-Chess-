@@ -45,6 +45,7 @@ const TournamentSchema = new mongoose.Schema({
   registrationDeadline: { type: Date },
   startTime: { type: Date },
   endTime: { type: Date },
+  reminderSent: { type: Boolean, default: false },
 
   // --- Status ---
   status: {

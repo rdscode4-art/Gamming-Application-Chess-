@@ -211,7 +211,7 @@ class TournamentDetailScreen extends StatelessWidget {
                   text: TextSpan(
                     children: [
                       TextSpan(text: 'Starts at ', style: TextStyle(color: context.textSecondary, fontSize: 14)),
-                      TextSpan(text: DateFormat('MMM d, h:mm a').format(startTime), style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 14, fontWeight: FontWeight.bold)),
+                      TextSpan(text: DateFormat('MMM d, h:mm a').format(startTime.toLocal()), style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 14, fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ),

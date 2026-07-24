@@ -1,11 +1,22 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/foundation.dart';
+import '../../routes/app_router.dart';
+import 'package:go_router/go_router.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // Handle background messages
   debugPrint("Handling a background message: ${message.messageId}");
+}
+
+void _handleMessageAction(RemoteMessage message) {
+  if (message.data['type'] == 'TOURNAMENT_MATCH_STARTED') {
+    final gameId = message.data['gameId'];
+    if (gameId != null && globalNavigatorKey.currentContext != null) {
+      globalNavigatorKey.currentContext!.push('/tournament-vs/$gameId');
+    }
+  }
 }
 
 class FCMService {
@@ -31,6 +42,11 @@ class FCMService {
 
     // Background handler
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+    // Handle app opened from background state via notification
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      _handleMessageAction(message);
+    });
 
     // Foreground notifications channel for Android
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
@@ -73,6 +89,12 @@ class FCMService {
             ),
           ),
         );
+        
+        // If it's a tournament match starting, you might also want to auto-navigate
+        // if they are in the foreground, or show a dialog. We'll auto-navigate for now.
+        if (message.data['type'] == 'TOURNAMENT_MATCH_STARTED') {
+          _handleMessageAction(message);
+        }
       }
     });
 

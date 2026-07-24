@@ -526,22 +526,24 @@ class GameService {
       const whiteUser = await User.findOne({ userId: room.whitePlayer.userId });
       const blackUser = await User.findOne({ userId: room.blackPlayer.userId });
 
-      await Game.create({
-        gameId: room.roomId,
-        whitePlayer: whiteUser?._id,
-        blackPlayer: blackUser?._id,
-        moves: room.moves,
-        status: 'completed',
-        winner,
-        reason,
-        timeControl: room.timeControl,
-        baseTime: TIME_CONTROLS[room.timeControl]?.base,
-        increment: room.increment,
-        contestType: room.contestType,
-        isRated: room.isRated,
-        entryFee: room.entryFee,
-        prizePool: room.prizePool,
-        whiteRatingBefore: eloChanges?.white?.before || null,
+      // Use updateOne with upsert to avoid duplicate key errors if the game shell was already created (e.g. by TournamentEngine)
+      await Game.updateOne({ gameId: room.roomId }, {
+        $set: {
+          whitePlayer: whiteUser?._id,
+          blackPlayer: blackUser?._id,
+          moves: room.moves,
+          status: 'completed',
+          winner,
+          reason,
+          timeControl: room.timeControl,
+          baseTime: TIME_CONTROLS[room.timeControl]?.base,
+          increment: room.increment,
+          contestType: room.contestType,
+          isRated: room.isRated,
+          entryFee: room.entryFee,
+          prizePool: room.prizePool,
+          tournamentId: room.tournamentId,
+          whiteRatingBefore: eloChanges?.white?.before || null,
         blackRatingBefore: eloChanges?.black?.before || null,
         whiteRatingAfter: eloChanges?.white?.after || null,
         blackRatingAfter: eloChanges?.black?.after || null,
@@ -550,8 +552,24 @@ class GameService {
         // Anti-cheat: avg move time
         whiteAvgMoveTime: this._calcAvgMoveTime(room.moves, 'white', room),
         blackAvgMoveTime: this._calcAvgMoveTime(room.moves, 'black', room),
-      });
+        }
+      }, { upsert: true });
       logger.info(`Game ${room.roomId} saved to MongoDB`);
+
+      if (room.contestType === 'tournament' && room.tournamentId) {
+        // Find the winner's user document to pass the exact userId to the tournament engine
+        let winnerUserId = null;
+        if (winner === 'white') winnerUserId = room.whitePlayer?.userId;
+        if (winner === 'black') winnerUserId = room.blackPlayer?.userId;
+        if (winner === 'draw') {
+          // If draw, we can randomize or use a tiebreaker. Simple random for now.
+          winnerUserId = Math.random() > 0.5 ? room.whitePlayer?.userId : room.blackPlayer?.userId;
+        }
+
+        const TournamentEngine = require('../../services/tournamentEngine');
+        // We will call a new function to record the match result before checking round completion
+        await TournamentEngine.recordMatchResult(room.tournamentId, room.roomId, winnerUserId);
+      }
     } catch (err) {
       logger.error(`Failed to save game ${room.roomId}: ${err.message}`);
     }

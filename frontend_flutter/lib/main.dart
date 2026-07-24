@@ -8,6 +8,7 @@ import 'core/di/service_locator.dart';
 import 'routes/app_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'firebase_options.dart';
 import 'core/services/fcm_service.dart';
 import 'features/auth/presentation/blocs/auth_bloc.dart';
@@ -38,20 +39,32 @@ void main() async {
   ApiClient.init();
   setupServiceLocator();
 
+  String initialRoute = '/splash';
+
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
     await FCMService().init();
+
+    // Handle app launched from killed state via notification
+    final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+    if (initialMessage != null && initialMessage.data['type'] == 'TOURNAMENT_MATCH_STARTED') {
+      final gameId = initialMessage.data['gameId'];
+      if (gameId != null) {
+        initialRoute = '/tournament-vs/$gameId';
+      }
+    }
   } catch (e) {
     debugPrint('Firebase initialization error: $e');
   }
 
-  runApp(const ChessPlatformApp());
+  runApp(ChessPlatformApp(initialRoute: initialRoute));
 }
 
 class ChessPlatformApp extends StatelessWidget {
-  const ChessPlatformApp({super.key});
+  final String initialRoute;
+  const ChessPlatformApp({super.key, this.initialRoute = '/splash'});
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +81,7 @@ class ChessPlatformApp extends StatelessWidget {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeMode,
-            routerConfig: appRouter,
+            routerConfig: appRouter..go(initialRoute),
             debugShowCheckedModeBanner: false,
           );
         },

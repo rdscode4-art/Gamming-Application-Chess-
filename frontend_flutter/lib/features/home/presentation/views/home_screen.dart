@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/network/api_client.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/bg_blobs.dart';
@@ -31,6 +32,26 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final PageController _bannerController = PageController();
   int _bannerIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkForActiveMatch();
+  }
+
+  Future<void> _checkForActiveMatch() async {
+    try {
+      final response = await ApiClient.instance.get('/tournaments/my-active-match');
+      if (response.statusCode == 200 && response.data['activeMatch'] == true) {
+        final gameId = response.data['gameId'];
+        if (mounted && gameId != null) {
+          context.push('/tournament-vs/$gameId');
+        }
+      }
+    } catch (e) {
+      debugPrint("Error checking active match: $e");
+    }
+  }
 
   Color _hexToColor(String? hex) {
     if (hex == null || hex.isEmpty) return AppColors.purpleLight;

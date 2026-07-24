@@ -92,7 +92,7 @@ class TournamentsListScreen extends StatelessWidget {
                                             children: [
                                               const Icon(Icons.schedule, color: AppColors.purpleLight, size: 14),
                                               const SizedBox(width: 6),
-                                              Text('Starts at ${DateFormat('MMM d, h:mm a').format(startTime)}', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 13, fontWeight: FontWeight.w500)),
+                                              Text('Starts at ${DateFormat('MMM d, h:mm a').format(startTime.toLocal())}', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 13, fontWeight: FontWeight.w500)),
                                             ],
                                           ),
                                         const SizedBox(height: 12),

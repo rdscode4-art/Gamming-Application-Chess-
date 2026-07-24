@@ -57,7 +57,10 @@ exports.createTournament = async (req, res, next) => {
 // GET /api/tournaments
 exports.getTournaments = async (req, res, next) => {
   try {
-    const tournaments = await Tournament.find({ isPrivate: false })
+    const tournaments = await Tournament.find({ 
+      isPrivate: false,
+      status: { $in: ['draft', 'registration', 'ongoing'] }
+    })
       .sort({ startTime: 1 })
       .limit(50);
     res.status(200).json(tournaments);
@@ -159,7 +162,115 @@ exports.registerForTournament = async (req, res, next) => {
     tournament.registeredPlayers.push(req.user.userId);
     await tournament.save();
 
-    res.status(200).json({ message: 'Registered successfully', tournament });
+    res.status(200).json({ message: 'Successfully registered', tournament });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// GET /api/tournaments/match/:gameId
+exports.getTournamentMatchInit = async (req, res, next) => {
+  try {
+    const Game = require('../../models/Game');
+    const redisService = require('../../services/redisService');
+    const { REDIS_KEYS } = require('../../utils/constants');
+    const gameService = require('../game/gameService');
+
+    const game = await Game.findOne({ gameId: req.params.gameId }).populate('whitePlayer blackPlayer');
+    if (!game) return res.status(404).json({ message: 'Game not found' });
+
+    // Check if room exists in Redis
+    let room = await redisService.getJSON(`${REDIS_KEYS.ROOM_PREFIX}${game.gameId}`);
+    
+    // If room is not in Redis (because TournamentEngine only created the Mongo doc), create it now
+    if (!room) {
+      const io = req.app.get('io');
+      
+      const p1 = {
+        userId: game.whitePlayer.userId,
+        username: game.whitePlayer.username,
+        rating: game.whitePlayer.rating,
+        avatarUrl: game.whitePlayer.avatarUrl,
+        socketId: null
+      };
+      
+      const p2 = {
+        userId: game.blackPlayer.userId,
+        username: game.blackPlayer.username,
+        rating: game.blackPlayer.rating,
+        avatarUrl: game.blackPlayer.avatarUrl,
+        socketId: null
+      };
+
+      await gameService.createGame(game.gameId, p1, p2, io, {
+        timeControl: game.timeControl,
+        contestType: game.contestType,
+        entryFee: game.entryFee,
+        prizePool: game.prizePool,
+        isRated: game.isRated
+      });
+      
+      // Add tournamentId so gameService knows it's a tournament game on completion
+      room = await redisService.getJSON(`${REDIS_KEYS.ROOM_PREFIX}${game.gameId}`);
+      if (room) {
+        room.tournamentId = game.tournamentId;
+        await redisService.setJSON(`${REDIS_KEYS.ROOM_PREFIX}${game.gameId}`, room);
+      }
+    }
+
+    // Format data similar to what MATCH_FOUND emits, so frontend GameBloc can init
+    const initData = {
+      roomId: game.gameId,
+      whitePlayer: {
+        userId: game.whitePlayer.userId,
+        username: game.whitePlayer.username,
+        rating: game.whitePlayer.rating,
+        avatarUrl: game.whitePlayer.avatarUrl,
+      },
+      blackPlayer: {
+        userId: game.blackPlayer.userId,
+        username: game.blackPlayer.username,
+        rating: game.blackPlayer.rating,
+        avatarUrl: game.blackPlayer.avatarUrl,
+      },
+      fen: room ? room.fen : 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+      whiteTime: room ? room.whiteTime : game.baseTime,
+      blackTime: room ? room.blackTime : game.baseTime,
+      increment: game.increment,
+      timeControl: game.timeControl,
+      contestType: game.contestType,
+      entryFee: game.entryFee,
+      prizePool: game.prizePool,
+      tournamentId: game.tournamentId
+    };
+
+    res.status(200).json(initData);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// GET /api/tournaments/my-active-match
+exports.getMyActiveTournamentMatch = async (req, res, next) => {
+  try {
+    const Game = require('../../models/Game');
+    const User = require('../../models/User');
+    
+    const user = await User.findOne({ userId: req.user.userId });
+    if (!user) return res.status(404).json({ activeMatch: false });
+
+    // Look for a waiting or active tournament match for this user
+    const game = await Game.findOne({
+      $or: [{ whitePlayer: user._id }, { blackPlayer: user._id }],
+      contestType: 'tournament',
+      status: { $in: ['waiting', 'active'] }
+    });
+
+    if (game) {
+      return res.status(200).json({ activeMatch: true, gameId: game.gameId });
+    } else {
+      return res.status(200).json({ activeMatch: false });
+    }
   } catch (error) {
     next(error);
   }

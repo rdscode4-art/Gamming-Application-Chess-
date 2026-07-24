@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/views/splash_screen.dart';
 import '../../features/auth/presentation/views/onboarding_screen.dart';
@@ -25,6 +26,7 @@ import '../../features/referral/presentation/views/referral_screen.dart';
 import '../../features/notifications/presentation/views/notifications_screen.dart';
 import '../../features/profile/presentation/views/edit_profile_screen.dart';
 import '../../features/profile/presentation/views/support_screen.dart';
+import '../../features/matchmaking/presentation/views/tournament_vs_animation_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../core/di/service_locator.dart';
 import '../features/matchmaking/presentation/blocs/matchmaking_bloc.dart';
@@ -64,14 +66,25 @@ class AppRoutes {
   static const editProfile = '/edit-profile';
   static const support = '/support';
   static const tournamentsList = '/tournaments-list';
+  static const tournamentVs = '/tournament-vs';
 }
 
+final GlobalKey<NavigatorState> globalNavigatorKey = GlobalKey<NavigatorState>();
+
 final GoRouter appRouter = GoRouter(
+  navigatorKey: globalNavigatorKey,
   initialLocation: AppRoutes.splash,
   routes: [
     GoRoute(
       path: AppRoutes.splash,
       builder: (context, state) => const SplashScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.tournamentVs + '/:gameId',
+      builder: (context, state) {
+        final gameId = state.pathParameters['gameId']!;
+        return TournamentMatchmakingAnimationScreen(gameId: gameId);
+      },
     ),
     GoRoute(
       path: AppRoutes.onboarding,
