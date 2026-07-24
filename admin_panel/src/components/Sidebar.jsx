@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Gamepad2, Trophy, Image, Users, Settings, Headset } from 'lucide-react';
+import { LayoutDashboard, Gamepad2, Trophy, Image, Users, Settings, Headset, Bell } from 'lucide-react';
 
 const Sidebar = () => {
   return (
@@ -42,6 +42,11 @@ const Sidebar = () => {
         <NavLink to="/support" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
           <Headset size={20} />
           Support Tickets
+        </NavLink>
+
+        <NavLink to="/notifications" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+          <Bell size={20} />
+          Notifications
         </NavLink>
       </nav>
     </aside>

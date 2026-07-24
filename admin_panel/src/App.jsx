@@ -7,6 +7,7 @@ import Tournaments from './pages/Tournaments'
 import Users from './pages/Users'
 import Settings from './pages/Settings'
 import Support from './pages/Support'
+import Notifications from './pages/Notifications'
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
           <Route path="/users" element={<Users />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/support" element={<Support />} />
+          <Route path="/notifications" element={<Notifications />} />
         </Routes>
       </main>
     </div>
