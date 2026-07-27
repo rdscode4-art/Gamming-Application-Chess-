@@ -9,6 +9,7 @@ import '../../../../core/widgets/back_header.dart';
 import '../../../../routes/app_router.dart';
 import '../../../tournament/presentation/blocs/tournament_bloc.dart';
 import '../../../tournament/presentation/blocs/tournament_state.dart';
+import '../../../tournament/presentation/blocs/tournament_event.dart';
 
 class TournamentsListScreen extends StatelessWidget {
   const TournamentsListScreen({super.key});
@@ -32,16 +33,27 @@ class TournamentsListScreen extends StatelessWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'All Tournaments',
-                      style: TextStyle(
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'All Tournaments',
+                        style: TextStyle(
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
+                      TextButton.icon(
+                        onPressed: () => _showJoinByCodeDialog(context),
+                        icon: const Icon(Icons.vpn_key, color: AppColors.gold, size: 18),
+                        label: const Text('Join Private', style: TextStyle(color: AppColors.gold)),
+                        style: TextButton.styleFrom(
+                          backgroundColor: AppColors.gold.withValues(alpha: 0.1),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 Expanded(
@@ -70,7 +82,7 @@ class TournamentsListScreen extends StatelessWidget {
                           
                           DateTime? startTime;
                           if (t['startTime'] != null) {
-                            startTime = DateTime.tryParse(t['startTime']);
+                            startTime = DateTime.tryParse(t['startTime'])?.toLocal();
                           }
 
                           return GestureDetector(
@@ -159,6 +171,45 @@ class TournamentsListScreen extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showJoinByCodeDialog(BuildContext context) {
+    final TextEditingController _codeCtrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppColors.glassBg : Colors.white,
+        title: Text('Join Private Tournament', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color)),
+        content: TextField(
+          controller: _codeCtrl,
+          textCapitalization: TextCapitalization.characters,
+          style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontWeight: FontWeight.bold, letterSpacing: 2.0),
+          decoration: InputDecoration(
+            hintText: 'Enter 6-digit Code',
+            hintStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
+            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.gold.withValues(alpha: 0.5))),
+            focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppColors.gold)),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.gold, foregroundColor: Colors.black),
+            onPressed: () {
+              final code = _codeCtrl.text.trim().toUpperCase();
+              if (code.isNotEmpty) {
+                context.read<TournamentBloc>().add(JoinTournamentByCode(code));
+                Navigator.pop(ctx);
+              }
+            },
+            child: const Text('Join', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),

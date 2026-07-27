@@ -392,9 +392,24 @@ class GameService {
       await this._distributePrize(room, winner);
     }
 
+    let tournamentDetails = null;
+    if (room.contestType === 'tournament' && room.tournamentId) {
+      const Tournament = require('../../models/Tournament');
+      const tourney = await Tournament.findById(room.tournamentId);
+      if (tourney) {
+        tournamentDetails = {
+          currentRound: tourney.currentRound,
+          totalRounds: tourney.totalRounds
+        };
+      }
+    }
+
     io.to(room.roomId).emit(SOCKET_EVENTS.GAME_OVER, {
       winner,
       reason,
+      contestType: room.contestType,
+      tournamentId: room.tournamentId,
+      tournamentDetails,
       eloChanges,
       whitePlayer: room.whitePlayer,
       blackPlayer: room.blackPlayer,

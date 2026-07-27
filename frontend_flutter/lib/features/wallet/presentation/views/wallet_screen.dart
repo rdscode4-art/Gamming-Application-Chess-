@@ -200,7 +200,7 @@ class WalletScreen extends StatelessWidget {
         const SizedBox(height: 12),
         Column(
           children: recentTxns.map((t) {
-            final isCredit = t['type'] == 'deposit' || t['type'] == 'winnings';
+            final isCredit = t['type'] == 'deposit' || t['type'] == 'winnings' || t['type'] == 'prize';
             final isFailed = t['status'] == 'failed';
             final isPending = t['status'] == 'pending';
             final amount = t['amount'] ?? 0;

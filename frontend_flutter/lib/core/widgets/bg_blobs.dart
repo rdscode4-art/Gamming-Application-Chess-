@@ -56,13 +56,13 @@ class BgBlobs extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: color.withAlpha((opacity * 255).toInt()),
         shape: BoxShape.circle,
-      ),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: blurRadius, sigmaY: blurRadius),
-        child: Container(
-          color: Colors.transparent,
+        gradient: RadialGradient(
+          colors: [
+            color.withAlpha((opacity * 255).toInt()),
+            color.withAlpha(0),
+          ],
+          stops: const [0.3, 1.0],
         ),
       ),
     );

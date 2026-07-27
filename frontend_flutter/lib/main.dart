@@ -59,12 +59,16 @@ void main() async {
     debugPrint('Firebase initialization error: $e');
   }
 
-  runApp(ChessPlatformApp(initialRoute: initialRoute));
+  if (initialRoute != '/splash') {
+    // Only override the router's default initial location if opened via a specific notification
+    appRouter.go(initialRoute);
+  }
+
+  runApp(const ChessPlatformApp());
 }
 
 class ChessPlatformApp extends StatelessWidget {
-  final String initialRoute;
-  const ChessPlatformApp({super.key, this.initialRoute = '/splash'});
+  const ChessPlatformApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -81,7 +85,7 @@ class ChessPlatformApp extends StatelessWidget {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeMode,
-            routerConfig: appRouter..go(initialRoute),
+            routerConfig: appRouter,
             debugShowCheckedModeBanner: false,
           );
         },

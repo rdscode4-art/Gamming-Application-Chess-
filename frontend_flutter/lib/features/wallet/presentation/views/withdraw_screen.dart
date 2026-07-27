@@ -80,8 +80,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
           ],
         ),
       ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-        floatingActionButton: _buildBottomActionBar(),
+        bottomNavigationBar: _buildBottomActionBar(),
       ),
     );
   }
@@ -326,8 +325,8 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
       child: SafeArea(
         child: BlocBuilder<WalletBloc, WalletState>(
           builder: (context, state) {
-            return GestureDetector(
-              onTap: state.isActionLoading
+            return ElevatedButton(
+              onPressed: state.isActionLoading
                   ? null
                   : () {
                       if (_selectedAmount == null || _detailsController.text.isEmpty) {
@@ -340,19 +339,18 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                       }
                       context.read<WalletBloc>().add(WalletWithdrawMoney(amount: _selectedAmount!, upiId: _detailsController.text));
                     },
-              child: Container(
-                width: double.infinity,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+                disabledBackgroundColor: Colors.grey,
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                decoration: BoxDecoration(
-                  color: state.isActionLoading ? Colors.grey : Theme.of(context).colorScheme.primary,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Center(
-                  child: state.isActionLoading
-                      ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Theme.of(context).scaffoldBackgroundColor, strokeWidth: 2))
-                      : Text('Submit Withdrawal Request', style: TextStyle(color: Theme.of(context).scaffoldBackgroundColor, fontSize: 16, fontWeight: FontWeight.w900)),
-                ),
+                minimumSize: const Size.fromHeight(54),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                elevation: 0,
               ),
+              child: state.isActionLoading
+                  ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Theme.of(context).scaffoldBackgroundColor, strokeWidth: 2))
+                  : const Text('Submit Withdrawal Request', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
             );
           },
         ),

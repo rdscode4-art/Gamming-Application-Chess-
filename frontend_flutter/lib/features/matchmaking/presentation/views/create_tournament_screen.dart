@@ -61,7 +61,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
                     const SizedBox(height: 24),
                     Text('ENTRY FEE (₹)', style: TextStyle(color: context.textSecondary, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
                     const SizedBox(height: 12),
-                    _buildInputField(icon: Icons.attach_money, hint: 'e.g. 100', controller: _entryFeeCtrl, isNumber: true),
+                    _buildInputField(icon: Icons.currency_rupee, hint: 'e.g. 100', controller: _entryFeeCtrl, isNumber: true),
                     const SizedBox(height: 8),
                     Text('Prize pool will be automatically calculated (90% of total entry fees)', style: TextStyle(color: context.textSecondary, fontSize: 11, fontStyle: FontStyle.italic)),
                     const SizedBox(height: 24),
@@ -283,9 +283,9 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
 
   Widget _buildFormatSelector() {
     final formats = [
-      {'label': 'Classic', 'val': 'classic_15'}, 
-      {'label': 'Rapid', 'val': 'rapid_10'}, 
-      {'label': 'Blitz', 'val': 'rapid_3'}
+      {'label': 'Classic\n15m', 'val': 'classic_15'}, 
+      {'label': 'Rapid\n10m', 'val': 'rapid_10'}, 
+      {'label': 'Blitz\n3m', 'val': 'rapid_3'}
     ];
     return Row(
       children: formats.map((fmt) {
@@ -295,7 +295,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
             onTap: () => setState(() => _selectedFormat = fmt['val']!),
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 4),
-              padding: const EdgeInsets.symmetric(vertical: 12),
+              padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
                 color: isSelected ? Theme.of(context).colorScheme.primary : (Theme.of(context).brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05)),
                 borderRadius: BorderRadius.circular(16),
@@ -303,9 +303,11 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
               child: Center(
                 child: Text(
                   fmt['label']!,
+                  textAlign: TextAlign.center,
                   style: TextStyle(
                     color: isSelected ? Theme.of(context).scaffoldBackgroundColor : context.textSecondary,
-                    fontSize: 14,
+                    fontSize: 13,
+                    height: 1.3,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

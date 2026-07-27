@@ -14,6 +14,7 @@ class TournamentBloc extends Bloc<TournamentEvent, TournamentState> {
     on<LoadTournamentDetails>(_onLoadTournamentDetails);
     on<CreateTournament>(_onCreateTournament);
     on<JoinTournament>(_onJoinTournament);
+    on<JoinTournamentByCode>(_onJoinTournamentByCode);
     on<ClearTournamentMessages>(_onClearMessages);
   }
 
@@ -46,6 +47,7 @@ class TournamentBloc extends Bloc<TournamentEvent, TournamentState> {
         successMessage: 'Tournament created successfully',
       ));
       add(LoadTournaments());
+      getIt<WalletBloc>().add(WalletFetchData());
     } catch (e) {
       emit(state.copyWith(isActionLoading: false, error: e.toString()));
     }
@@ -60,6 +62,23 @@ class TournamentBloc extends Bloc<TournamentEvent, TournamentState> {
         successMessage: 'Successfully joined tournament!',
       ));
       add(LoadTournamentDetails(event.tournamentId));
+      getIt<WalletBloc>().add(WalletFetchData());
+    } catch (e) {
+      emit(state.copyWith(isActionLoading: false, error: e.toString().replaceAll('Exception: ', '')));
+    }
+  }
+
+  Future<void> _onJoinTournamentByCode(JoinTournamentByCode event, Emitter<TournamentState> emit) async {
+    emit(state.copyWith(isActionLoading: true, clearMessages: true));
+    try {
+      final response = await _repository.joinTournamentByCode(event.inviteCode);
+      emit(state.copyWith(
+        isActionLoading: false,
+        successMessage: 'Successfully joined tournament!',
+      ));
+      if (response['tournament'] != null) {
+        add(LoadTournamentDetails(response['tournament']['tournamentId']));
+      }
       getIt<WalletBloc>().add(WalletFetchData());
     } catch (e) {
       emit(state.copyWith(isActionLoading: false, error: e.toString().replaceAll('Exception: ', '')));

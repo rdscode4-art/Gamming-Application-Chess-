@@ -35,4 +35,12 @@ class TournamentRepository {
       throw Exception('Failed to register for tournament');
     }
   }
+
+  Future<Map<String, dynamic>> joinTournamentByCode(String code) async {
+    final response = await ApiService.post(AppConstants.tournamentJoinByCodeUrl, {'inviteCode': code});
+    if (response != null) {
+      return response as Map<String, dynamic>;
+    }
+    throw Exception('Failed to join tournament');
+  }
 }

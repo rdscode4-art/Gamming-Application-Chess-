@@ -55,12 +55,9 @@ class GlassCard extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(borderRadius),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Padding(
-            padding: padding ?? EdgeInsets.zero,
-            child: child,
-          ),
+        child: Padding(
+          padding: padding ?? EdgeInsets.zero,
+          child: child,
         ),
       ),
     );

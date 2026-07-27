@@ -12,12 +12,7 @@ const bannerSchema = new mongoose.Schema({
 
 bannerSchema.methods.toJSON = function () {
   const banner = this.toObject();
-  banner.id = banner._id;
-  delete banner._id;
-  delete banner.__v;
-  delete banner.isActive;
-  delete banner.createdAt;
-  delete banner.updatedAt;
+  banner.id = banner._id.toString();
   return banner;
 };
 

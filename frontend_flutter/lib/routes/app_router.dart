@@ -27,6 +27,7 @@ import '../../features/notifications/presentation/views/notifications_screen.dar
 import '../../features/profile/presentation/views/edit_profile_screen.dart';
 import '../../features/profile/presentation/views/support_screen.dart';
 import '../../features/matchmaking/presentation/views/tournament_vs_animation_screen.dart';
+import '../../features/guide/presentation/views/chess_guide_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../core/di/service_locator.dart';
 import '../features/matchmaking/presentation/blocs/matchmaking_bloc.dart';
@@ -67,6 +68,7 @@ class AppRoutes {
   static const support = '/support';
   static const tournamentsList = '/tournaments-list';
   static const tournamentVs = '/tournament-vs';
+  static const guide = '/guide';
 }
 
 final GlobalKey<NavigatorState> globalNavigatorKey = GlobalKey<NavigatorState>();
@@ -263,6 +265,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.support,
       builder: (context, state) => const SupportScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.guide,
+      builder: (context, state) => const ChessGuideScreen(),
     ),
   ],
 );

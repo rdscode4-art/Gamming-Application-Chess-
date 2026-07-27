@@ -1,5 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
+import 'package:timeago/timeago.dart' as timeago;
+import '../../../../core/widgets/skeleton.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_client.dart';
 
@@ -9,19 +13,17 @@ import '../../../../core/widgets/glass_card.dart';
 import '../../../../core/widgets/avatar_badge.dart';
 import '../../../../routes/app_router.dart';
 import '../../../../core/services/storage_service.dart';
+import '../../../../core/di/service_locator.dart';
 import '../../../matchmaking/presentation/blocs/matchmaking_bloc.dart';
 import '../../../matchmaking/presentation/blocs/matchmaking_state.dart';
 import '../../../wallet/presentation/blocs/wallet_bloc.dart';
-import '../../../wallet/presentation/blocs/wallet_state.dart';
 import '../../../wallet/presentation/blocs/wallet_event.dart';
-import '../../../../core/di/service_locator.dart';
 import '../../../tournament/presentation/blocs/tournament_bloc.dart';
 import '../../../tournament/presentation/blocs/tournament_state.dart';
 import '../blocs/home_bloc.dart';
 import '../blocs/home_state.dart';
 import '../../../notifications/presentation/blocs/notification_bloc.dart';
 import '../../../notifications/presentation/blocs/notification_state.dart';
-import 'package:intl/intl.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -120,7 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Row(
             children: [
-              AvatarBadge(name: username, size: 44, rating: state.myRating),
+              AvatarBadge(name: username, size: 48, rating: state.myRating),
               const SizedBox(width: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -128,7 +130,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text('Good evening,', style: TextStyle(color: context.textSecondary, fontSize: 12)),
                   Text(
                     username,
-                    style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: 14, fontWeight: FontWeight.bold),
+                    style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
@@ -138,69 +140,41 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               GestureDetector(
                 onTap: () => context.push(AppRoutes.notifications),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).brightness == Brightness.dark ? AppColors.glassBg : Colors.black.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? AppColors.glassBorder : Colors.black.withValues(alpha: 0.1)),
-                  ),
-                  child: BlocBuilder<NotificationBloc, NotificationState>(
-                    builder: (context, notifState) {
-                      bool hasUnread = false;
-                      if (notifState is NotificationLoaded) {
-                        hasUnread = notifState.notifications.any((n) => !n.isRead);
-                      }
-                      return Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Icon(Icons.notifications, color: context.textPrimary, size: 18),
-                          if (hasUnread)
-                            Positioned(
-                              top: 0,
-                              right: 0,
-                              child: Container(
-                                width: 8,
-                                height: 8,
-                                decoration: const BoxDecoration(
-                                  color: AppColors.red,
-                                  shape: BoxShape.circle,
-                                ),
+                child: BlocBuilder<NotificationBloc, NotificationState>(
+                  builder: (context, notifState) {
+                    bool hasUnread = false;
+                    if (notifState is NotificationLoaded) {
+                      hasUnread = notifState.notifications.any((n) => !n.isRead);
+                    }
+                    return Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Icon(Icons.notifications, color: context.textPrimary, size: 24),
+                        if (hasUnread)
+                          Positioned(
+                            top: 0,
+                            right: 0,
+                            child: Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: AppColors.red,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Theme.of(context).scaffoldBackgroundColor, width: 1.5),
                               ),
                             ),
-                        ],
-                      );
-                    },
-                  ),
+                          ),
+                      ],
+                    );
+                  },
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 16),
               GestureDetector(
                 onTap: () => context.go(AppRoutes.wallet),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: AppColors.gold.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.gold.withValues(alpha: 0.3)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.account_balance_wallet, color: AppColors.gold, size: 16),
-                      const SizedBox(width: 6),
-                      BlocBuilder<WalletBloc, WalletState>(
-                        bloc: getIt<WalletBloc>(),
-                        builder: (context, walletState) {
-                          return Text(
-                            '₹${walletState.totalBalance}',
-                            style: const TextStyle(color: AppColors.gold, fontSize: 14, fontWeight: FontWeight.bold),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
+                child: Icon(Icons.account_balance_wallet, color: context.textPrimary, size: 24),
               ),
+              const SizedBox(width: 4),
             ],
           ),
         ],
@@ -211,7 +185,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildBannerCarousel() {
     return BlocBuilder<HomeBloc, HomeState>(
       builder: (context, state) {
-        if (state.isLoading) return const SizedBox(height: 150, child: Center(child: CircularProgressIndicator(color: AppColors.gold)));
+        if (state.isLoading) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: Skeleton(width: double.infinity, height: 150, borderRadius: 16),
+          );
+        }
         if (state.banners.isEmpty) return const SizedBox();
 
         return Padding(
@@ -340,104 +319,114 @@ class _HomeScreenState extends State<HomeScreen> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Middle Row: 2 Big Cards
           Row(
             children: [
-              Container(width: 4, height: 16, decoration: BoxDecoration(color: AppColors.purpleLight, borderRadius: BorderRadius.circular(2))),
-              const SizedBox(width: 8),
-              Text('QUICK PLAY', style: TextStyle(color: context.textPrimary, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+              Expanded(
+                child: _buildBigSquareAction(
+                  'Play online',
+                  '🎮',
+                  AppColors.purpleLight,
+                  () => context.push(AppRoutes.playMode),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildBigSquareAction(
+                  'Chess Guide',
+                  '📖',
+                  AppColors.gold,
+                  () => context.push(AppRoutes.guide),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 16),
-          // Glass Hero Play Card
-          GlassCard(
-            onTap: () => context.push(AppRoutes.playMode),
-            padding: const EdgeInsets.all(24),
-            borderRadius: 24,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(color: AppColors.purpleLight.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
-                            child: const Text('1 VS 1', style: TextStyle(color: AppColors.purpleLight, fontSize: 12, fontWeight: FontWeight.bold)),
-                          ),
-                          const SizedBox(height: 12),
-                          Text('PLAY ONLINE', style: TextStyle(color: context.textPrimary, fontSize: 26, fontWeight: FontWeight.w900, fontFamily: 'Rajdhani', letterSpacing: 1)),
-                          const SizedBox(height: 4),
-                          Text('Global Matchmaking', style: TextStyle(color: context.textSecondary, fontSize: 13)),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 80),
-                  ],
-                ),
-                Positioned(
-                  right: -15,
-                  bottom: -20,
-                  child: Transform.rotate(
-                    angle: -0.15,
-                    child: const Text('🎮', style: TextStyle(fontSize: 100, shadows: [Shadow(color: Colors.black54, blurRadius: 20, offset: Offset(0, 10))])),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          // Glass Action Cards
+          // Bottom Row: 3 Small Cards
           Row(
             children: [
-              Container(width: 4, height: 16, decoration: BoxDecoration(color: AppColors.gold, borderRadius: BorderRadius.circular(2))),
-              const SizedBox(width: 8),
-              Text('DISCOVER', style: TextStyle(color: context.textPrimary, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+              Expanded(
+                child: _buildSmallSquareAction(
+                  'Create',
+                  '⚔️',
+                  AppColors.green,
+                  () => context.push(AppRoutes.createTournament),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildSmallSquareAction(
+                  'Wallet',
+                  '💰',
+                  const Color(0xFFFF5252),
+                  () => context.push(AppRoutes.wallet),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildSmallSquareAction(
+                  'Refer & earn',
+                  '🎁',
+                  AppColors.gold,
+                  () => context.push(AppRoutes.referral),
+                ),
+              ),
             ],
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 140,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              clipBehavior: Clip.none,
-              children: [
-                _buildGlassAction('Create', '⚔️', AppColors.green, () => context.push(AppRoutes.createTournament)),
-                const SizedBox(width: 16),
-                _buildGlassAction('Wallet', '💰', const Color(0xFFFF5252), () => context.push(AppRoutes.wallet)),
-                const SizedBox(width: 16),
-                _buildGlassAction('Refer & Earn', '🎁', AppColors.gold, () => context.push(AppRoutes.referral)),
-              ],
-            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildGlassAction(String label, String emoji, Color color, VoidCallback onTap) {
+  Widget _buildBigSquareAction(String label, String emoji, Color color, VoidCallback onTap) {
     return GlassCard(
       onTap: onTap,
-      width: 110,
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
       borderRadius: 24,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
+              color: color.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
-            child: Text(emoji, style: const TextStyle(fontSize: 32, shadows: [Shadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 6))])),
+            child: Text(emoji, style: const TextStyle(fontSize: 36, shadows: [Shadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 6))])),
+          ),
+          const SizedBox(height: 16),
+          Text(label, textAlign: TextAlign.center, style: TextStyle(color: context.textPrimary, fontSize: 16, fontWeight: FontWeight.bold, fontFamily: 'Rajdhani', letterSpacing: 0.5)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSmallSquareAction(String label, String emoji, Color color, VoidCallback onTap) {
+    return GlassCard(
+      onTap: onTap,
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
+      borderRadius: 20,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Text(emoji, style: const TextStyle(fontSize: 24, shadows: [Shadow(color: Colors.black45, blurRadius: 8, offset: Offset(0, 4))])),
           ),
           const SizedBox(height: 10),
-          Text(label, style: TextStyle(color: context.textPrimary, fontSize: 13, fontWeight: FontWeight.bold)),
+          Text(
+            label, 
+            textAlign: TextAlign.center,
+            style: TextStyle(color: context.textPrimary, fontSize: 12, fontWeight: FontWeight.bold),
+          ),
         ],
       ),
     );
@@ -446,7 +435,18 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildLiveMatches() {
     return BlocBuilder<HomeBloc, HomeState>(
       builder: (context, state) {
-        if (state.isLoading) return const Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: AppColors.green));
+        if (state.isLoading) {
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                const Skeleton(width: double.infinity, height: 80, borderRadius: 16),
+                const SizedBox(height: 12),
+                const Skeleton(width: double.infinity, height: 80, borderRadius: 16),
+              ],
+            ),
+          );
+        }
         
         final matches = state.liveMatches;
         
@@ -617,7 +617,13 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 16),
               if (state.isLoading)
-                const Center(child: CircularProgressIndicator(color: AppColors.gold))
+                Column(
+                  children: const [
+                    Skeleton(width: double.infinity, height: 90, borderRadius: 20),
+                    SizedBox(height: 12),
+                    Skeleton(width: double.infinity, height: 90, borderRadius: 20),
+                  ],
+                )
               else if (tourneys.isEmpty)
                 Center(child: Text('No upcoming tournaments', style: TextStyle(color: context.textSecondary)))
               else
@@ -634,7 +640,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     
                     DateTime? startTime;
                     if (t['startTime'] != null) {
-                      startTime = DateTime.tryParse(t['startTime']);
+                      startTime = DateTime.tryParse(t['startTime'])?.toLocal();
                     }
 
                     return GestureDetector(

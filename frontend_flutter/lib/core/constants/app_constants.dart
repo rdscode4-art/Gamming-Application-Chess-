@@ -38,6 +38,7 @@ class AppConstants {
 
   // ─── Tournament API (Phase 6) ─────────────────────────────────────────────
   static const String tournamentsUrl = '$apiUrl/tournaments';
+  static const String tournamentJoinByCodeUrl = '$apiUrl/tournaments/join-by-code';
   static String tournamentDetailUrl(String id) => '$apiUrl/tournaments/$id';
   static String tournamentRegisterUrl(String id) => '$apiUrl/tournaments/$id/register';
   static String tournamentBracketUrl(String id) => '$apiUrl/tournaments/$id/bracket';

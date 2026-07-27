@@ -9,6 +9,39 @@ exports.createTournament = async (req, res, next) => {
   try {
     const { name, description, format, timeControl, maxPlayers, entryFee, startTime, isPrivate, customDistribution = [100] } = req.body;
 
+    let depositDeduct = 0, winningsDeduct = 0, bonusDeduct = 0;
+    if (entryFee > 0) {
+      const user = await User.findOne({ userId: req.user.userId });
+      const totalBalance = user.depositBalance + user.winningsBalance + user.bonusBalance;
+      
+      if (totalBalance < entryFee) {
+        return res.status(400).json({ message: 'Insufficient balance to join your own tournament' });
+      }
+
+      let feeRemaining = entryFee;
+      if (user.depositBalance >= feeRemaining) {
+        depositDeduct = feeRemaining;
+        feeRemaining = 0;
+      } else {
+        depositDeduct = user.depositBalance;
+        feeRemaining -= depositDeduct;
+      }
+
+      if (feeRemaining > 0) {
+        if (user.winningsBalance >= feeRemaining) {
+          winningsDeduct = feeRemaining;
+          feeRemaining = 0;
+        } else {
+          winningsDeduct = user.winningsBalance;
+          feeRemaining -= winningsDeduct;
+        }
+      }
+
+      if (feeRemaining > 0) {
+        bonusDeduct = feeRemaining;
+      }
+    }
+
     const commissionSetting = await SystemSetting.findOne({ key: 'user_private_tournament_commission' });
     const commissionPercentage = commissionSetting && commissionSetting.value !== undefined ? Number(commissionSetting.value) : 10;
 
@@ -44,9 +77,33 @@ exports.createTournament = async (req, res, next) => {
       prizeDistribution,
       startTime,
       isPrivate,
+      inviteCode: isPrivate ? Math.random().toString(36).substring(2, 8).toUpperCase() : undefined,
       createdBy: req.user.userId,
+      registeredPlayers: [req.user.userId],
       status: 'registration'
     });
+
+    if (entryFee > 0) {
+      await User.updateOne(
+        { userId: req.user.userId },
+        { 
+          $inc: { 
+            depositBalance: -depositDeduct,
+            winningsBalance: -winningsDeduct,
+            bonusBalance: -bonusDeduct
+          } 
+        }
+      );
+      await Transaction.create({
+        transactionId: uuidv4(),
+        userId: req.user.userId,
+        type: 'entry_fee',
+        amount: entryFee,
+        balanceType: 'mixed',
+        status: 'completed',
+        description: `Entry fee for tournament ${name}`,
+      });
+    }
 
     res.status(201).json(tournament);
   } catch (error) {
@@ -57,8 +114,13 @@ exports.createTournament = async (req, res, next) => {
 // GET /api/tournaments
 exports.getTournaments = async (req, res, next) => {
   try {
+    const userId = req.user.userId;
     const tournaments = await Tournament.find({ 
-      isPrivate: false,
+      $or: [
+        { isPrivate: false },
+        { createdBy: userId },
+        { registeredPlayers: userId }
+      ],
       status: { $in: ['draft', 'registration', 'ongoing'] }
     })
       .sort({ startTime: 1 })
@@ -79,7 +141,13 @@ exports.getTournamentDetails = async (req, res, next) => {
     tournamentObj.isUserRegistered = tournament.registeredPlayers.includes(req.user.userId);
     tournamentObj.isFull = tournament.registeredPlayers.length >= tournament.maxPlayers;
 
-    // In a real app, we'd populate registered players' details
+    // Populate registered players' details
+    const playersData = await User.find(
+      { userId: { $in: tournament.registeredPlayers } },
+      'userId username avatarUrl'
+    );
+    tournamentObj.registeredPlayersData = playersData;
+
     res.status(200).json(tournamentObj);
   } catch (error) {
     next(error);
@@ -234,6 +302,7 @@ exports.getTournamentMatchInit = async (req, res, next) => {
         avatarUrl: game.blackPlayer.avatarUrl,
       },
       fen: room ? room.fen : 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+      turn: room ? room.turn : 'w',
       whiteTime: room ? room.whiteTime : game.baseTime,
       blackTime: room ? room.blackTime : game.baseTime,
       increment: game.increment,
@@ -271,6 +340,90 @@ exports.getMyActiveTournamentMatch = async (req, res, next) => {
     } else {
       return res.status(200).json({ activeMatch: false });
     }
+  } catch (error) {
+    next(error);
+  }
+};
+
+// POST /api/tournaments/join-by-code
+exports.joinTournamentByCode = async (req, res, next) => {
+  try {
+    const { inviteCode } = req.body;
+    if (!inviteCode) return res.status(400).json({ message: 'Invite code is required' });
+
+    const tournament = await Tournament.findOne({ inviteCode: inviteCode.toUpperCase(), isPrivate: true });
+    if (!tournament) return res.status(404).json({ message: 'Invalid invite code or tournament not found' });
+    if (tournament.status !== 'registration') return res.status(400).json({ message: 'Registration is closed' });
+    
+    if (tournament.registeredPlayers.includes(req.user.userId)) {
+      return res.status(400).json({ message: 'Already registered' });
+    }
+
+    if (tournament.registeredPlayers.length >= tournament.maxPlayers) {
+      return res.status(400).json({ message: 'Tournament is full' });
+    }
+
+    if (tournament.entryFee > 0) {
+      const user = await User.findOne({ userId: req.user.userId });
+      const totalBalance = user.depositBalance + user.winningsBalance + user.bonusBalance;
+      
+      if (totalBalance < tournament.entryFee) {
+        return res.status(400).json({ message: 'Insufficient balance' });
+      }
+
+      let feeRemaining = tournament.entryFee;
+      let depositDeduct = 0, winningsDeduct = 0, bonusDeduct = 0;
+
+      if (user.depositBalance >= feeRemaining) {
+        depositDeduct = feeRemaining;
+        feeRemaining = 0;
+      } else {
+        depositDeduct = user.depositBalance;
+        feeRemaining -= depositDeduct;
+      }
+
+      if (feeRemaining > 0) {
+        if (user.winningsBalance >= feeRemaining) {
+          winningsDeduct = feeRemaining;
+          feeRemaining = 0;
+        } else {
+          winningsDeduct = user.winningsBalance;
+          feeRemaining -= winningsDeduct;
+        }
+      }
+
+      if (feeRemaining > 0) {
+        bonusDeduct = feeRemaining;
+      }
+
+      await User.updateOne(
+        { userId: req.user.userId },
+        { 
+          $inc: { 
+            depositBalance: -depositDeduct,
+            winningsBalance: -winningsDeduct,
+            bonusBalance: -bonusDeduct
+          } 
+        }
+      );
+
+      const Transaction = require('../../models/Transaction');
+      const { v4: uuidv4 } = require('uuid');
+      await Transaction.create({
+        transactionId: uuidv4(),
+        userId: req.user.userId,
+        type: 'entry_fee',
+        amount: tournament.entryFee,
+        balanceType: 'mixed',
+        status: 'completed',
+        description: `Entry fee for tournament ${tournament.name}`,
+      });
+    }
+
+    tournament.registeredPlayers.push(req.user.userId);
+    await tournament.save();
+
+    res.status(200).json({ message: 'Successfully registered', tournament });
   } catch (error) {
     next(error);
   }

@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Gamepad2, Trophy, Image, Users, Settings, Headset, Bell } from 'lucide-react';
+import { LayoutDashboard, Gamepad2, Trophy, Image, Users, Settings, Headset, Bell, Banknote } from 'lucide-react';
 
 const Sidebar = () => {
   return (
@@ -32,6 +32,11 @@ const Sidebar = () => {
         <NavLink to="/users" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
           <Users size={20} />
           Users & Wallet
+        </NavLink>
+
+        <NavLink to="/withdrawals" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+          <Banknote size={20} />
+          Withdrawals
         </NavLink>
 
         <NavLink to="/settings" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>

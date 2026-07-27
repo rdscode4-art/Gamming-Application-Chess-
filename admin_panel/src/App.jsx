@@ -8,6 +8,7 @@ import Users from './pages/Users'
 import Settings from './pages/Settings'
 import Support from './pages/Support'
 import Notifications from './pages/Notifications'
+import Withdrawals from './pages/Withdrawals'
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route path="/settings" element={<Settings />} />
           <Route path="/support" element={<Support />} />
           <Route path="/notifications" element={<Notifications />} />
+          <Route path="/withdrawals" element={<Withdrawals />} />
         </Routes>
       </main>
     </div>

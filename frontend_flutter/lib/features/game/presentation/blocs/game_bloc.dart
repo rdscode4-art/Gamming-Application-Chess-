@@ -90,6 +90,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       prizePool: (data['prizePool'] ?? 0) as int,
       timeControlLabel: tcMap['label'] ?? tc,
       fen: data['fen'],
+      currentTurn: data['turn'] ?? 'w',
     ));
 
     _localTicker?.cancel();

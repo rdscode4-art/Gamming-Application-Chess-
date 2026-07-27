@@ -31,4 +31,12 @@ class JoinTournament extends TournamentEvent {
   List<Object?> get props => [tournamentId];
 }
 
+class JoinTournamentByCode extends TournamentEvent {
+  final String inviteCode;
+  JoinTournamentByCode(this.inviteCode);
+
+  @override
+  List<Object?> get props => [inviteCode];
+}
+
 class ClearTournamentMessages extends TournamentEvent {}

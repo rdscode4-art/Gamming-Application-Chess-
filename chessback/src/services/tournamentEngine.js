@@ -4,6 +4,7 @@ const Game = require('../models/Game');
 const Transaction = require('../models/Transaction');
 const { sendPushNotification } = require('../config/firebaseAdmin');
 const { v4: uuidv4 } = require('uuid');
+const socketManager = require('../socket/socketManager');
 
 const getNextPowerOfTwo = (n) => {
   return Math.pow(2, Math.ceil(Math.log2(n)));
@@ -24,15 +25,15 @@ class TournamentEngine {
 
       const players = tournament.registeredPlayers || [];
 
-      // If fewer than 2 players, or not a power of 2, cancel and refund
-      if (players.length < 2 || !isPowerOfTwo(players.length)) {
+      // If it is not full, cancel and refund
+      if (players.length !== tournament.maxPlayers) {
         tournament.status = 'cancelled';
         await tournament.save();
         await this.refundEntryFees(tournament);
         
         const reason = "insufficient registrations";
         await this.notifyPlayers(players, 'Tournament Cancelled', `Your tournament "${tournament.name}" was cancelled due to ${reason}. Entry fee refunded.`);
-        console.log(`[TournamentEngine] Tournament ${tournamentId} cancelled.`);
+        console.log(`[TournamentEngine] Tournament ${tournamentId} cancelled because it did not reach max players.`);
         return;
       }
 
@@ -300,6 +301,14 @@ class TournamentEngine {
       
       if (fcmTokens.length > 0) {
         await sendPushNotification(fcmTokens, title, body, data);
+      }
+      
+      // Emit socket event to players if they are online
+      const io = socketManager.getIo();
+      if (io && data.type === 'TOURNAMENT_MATCH_STARTED') {
+        for (const userId of userIds) {
+          io.to(userId).emit('tournament_match_ready', data);
+        }
       }
     } catch (e) {
       console.error('[TournamentEngine] Notification error:', e);

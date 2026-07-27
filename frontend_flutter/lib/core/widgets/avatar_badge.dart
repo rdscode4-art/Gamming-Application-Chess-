@@ -43,9 +43,8 @@ class AvatarBadge extends StatelessWidget {
             width: size,
             height: size,
             decoration: BoxDecoration(
-              color: imageUrl != null ? Colors.transparent : bgColor,
+              color: imageUrl != null ? Colors.transparent : Colors.white,
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white.withAlpha(50), width: 2),
               image: imageUrl != null
                   ? DecorationImage(image: NetworkImage(imageUrl!), fit: BoxFit.cover)
                   : null,
@@ -53,11 +52,11 @@ class AvatarBadge extends StatelessWidget {
             child: imageUrl == null
                 ? Center(
                     child: Text(
-                      initials,
+                      initials.isNotEmpty ? initials[0] : '', // Only first letter, like "W"
                       style: TextStyle(
-                        color: Colors.white,
+                        color: Colors.black,
                         fontWeight: FontWeight.bold,
-                        fontSize: size * 0.35,
+                        fontSize: size * 0.5,
                       ),
                     ),
                   )
@@ -65,21 +64,23 @@ class AvatarBadge extends StatelessWidget {
           ),
           if (rating != null)
             Positioned(
-              bottom: -4,
-              right: -4,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                decoration: BoxDecoration(
-                  gradient: AppColors.goldGrad,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.navyDeep, width: 1.5),
-                ),
-                child: Text(
-                  rating.toString(),
-                  style: const TextStyle(
-                    color: AppColors.navyDeep,
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
+              bottom: -8,
+              left: -10,
+              right: -10,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFB74D), // Light orange/yellow from mockup
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    rating.toString(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),

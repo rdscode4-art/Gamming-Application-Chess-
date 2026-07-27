@@ -59,6 +59,36 @@ class VictoryScreen extends StatelessWidget {
     String title = isWin ? 'VICTORY!' : (isDraw ? 'DRAW' : 'DEFEAT');
     Color titleColor = isWin ? Theme.of(context).colorScheme.primary : (isDraw ? Colors.blueAccent : AppColors.red);
 
+    Widget? tournamentInfo;
+    if (gameResult != null && gameResult!['contestType'] == 'tournament' && gameResult!['tournamentDetails'] != null) {
+      final details = gameResult!['tournamentDetails'];
+      final currentRound = details['currentRound'];
+      final totalRounds = details['totalRounds'];
+      
+      String message = '';
+      if (currentRound < totalRounds) {
+        message = isWin ? 'Won Round $currentRound! Waiting for Round ${currentRound + 1}...' : 'Eliminated in Round $currentRound';
+      } else {
+        message = isWin ? 'Tournament Winner!' : 'Runner-up (Finals)';
+      }
+      
+      tournamentInfo = Padding(
+        padding: const EdgeInsets.only(top: 12.0),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5)),
+          ),
+          child: Text(
+            message,
+            style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 14, fontWeight: FontWeight.bold),
+          ),
+        ),
+      );
+    }
+
     return Column(
       children: [
         Text(emoji, style: const TextStyle(fontSize: 80)),
@@ -71,7 +101,7 @@ class VictoryScreen extends StatelessWidget {
             fontWeight: FontWeight.w900,
             fontFamily: 'Rajdhani',
             letterSpacing: 2.0,
-            shadows: [BoxShadow(color: titleColor.withOpacity(0.5), blurRadius: 20)],
+            shadows: [BoxShadow(color: titleColor.withValues(alpha: 0.5), blurRadius: 20)],
           ),
         ),
         if (gameResult != null && gameResult!['reason'] != null)
@@ -82,6 +112,7 @@ class VictoryScreen extends StatelessWidget {
               style: TextStyle(color: context.textSecondary, fontSize: 16),
             ),
           ),
+        if (tournamentInfo != null) tournamentInfo,
       ],
     );
   }

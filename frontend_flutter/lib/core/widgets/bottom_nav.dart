@@ -21,11 +21,9 @@ class BottomNav extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-          child: SafeArea(
-            top: false,
-            child: Padding(
+        child: SafeArea(
+          top: false,
+          child: Padding(
               padding: const EdgeInsets.only(left: 16, right: 16, top: 12, bottom: 8),
               child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -37,11 +35,10 @@ class BottomNav extends StatelessWidget {
                 _buildItem(context, Icons.person_outline, Icons.person, 'Profile', AppRoutes.profile, location),
               ],
             ),
-          ),
-        ),
-      ),
-      ),
-    );
+            ), // closes Padding
+          ), // closes SafeArea
+        ), // closes ClipRRect
+      ); // closes Container
   }
 
   Widget _buildItem(BuildContext context, IconData inactiveIcon, IconData activeIcon, String label, String route, String currentLoc) {

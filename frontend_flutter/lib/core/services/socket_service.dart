@@ -3,6 +3,8 @@ import 'package:logger/logger.dart';
 import 'dart:ui';
 import '../constants/app_constants.dart';
 import 'storage_service.dart';
+import '../../routes/app_router.dart';
+import 'package:go_router/go_router.dart';
 
 class SocketService {
   static final SocketService _instance = SocketService._internal();
@@ -18,6 +20,7 @@ class SocketService {
   bool get isConnected => _socket?.connected ?? false;
 
   final List<VoidCallback> _connectListeners = [];
+  final Map<String, List<Function(dynamic)>> _eventListeners = {};
 
   void addConnectListener(VoidCallback listener) {
     if (!_connectListeners.contains(listener)) {
@@ -54,6 +57,13 @@ class SocketService {
       'timeout': 20000,
     });
 
+    // Reattach all saved listeners
+    _eventListeners.forEach((event, callbacks) {
+      for (var cb in callbacks) {
+        _socket!.on(event, cb);
+      }
+    });
+
     _socket!.connect();
 
     _socket!.onConnect((_) {
@@ -61,6 +71,13 @@ class SocketService {
       _logger.i('✅ Socket Connected: ${AppConstants.baseUrl}');
       for (var listener in _connectListeners) {
         listener();
+      }
+    });
+
+    _socket!.on(AppConstants.tournamentMatchReady, (data) {
+      final gameId = data['gameId'];
+      if (gameId != null && globalNavigatorKey.currentContext != null) {
+        globalNavigatorKey.currentContext!.push('/tournament-vs/$gameId');
       }
     });
 
@@ -121,11 +138,16 @@ class SocketService {
 
   // ─── Listen ───────────────────────────────────────────────────────────────
   void listen(String event, Function(dynamic) callback) {
+    if (!_eventListeners.containsKey(event)) {
+      _eventListeners[event] = [];
+    }
+    _eventListeners[event]!.add(callback);
     _socket?.on(event, callback);
   }
 
   // ─── Remove listener ─────────────────────────────────────────────────────
   void off(String event) {
+    _eventListeners.remove(event);
     _socket?.off(event);
   }
 

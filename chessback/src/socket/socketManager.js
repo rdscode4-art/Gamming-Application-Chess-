@@ -8,6 +8,8 @@ const registerGameHandlers = require('../modules/game/gameSocket');
 const matchmakingService = require('../modules/matchmaking/matchmakingService');
 const gameService = require('../modules/game/gameService');
 
+let ioInstance;
+
 const initSocket = (server) => {
   const io = new Server(server, {
     cors: {
@@ -36,6 +38,9 @@ const initSocket = (server) => {
   // ── Connection ────────────────────────────────────────────────────────────────
   io.on('connection', (socket) => {
     logger.info(`🔌 Connected: ${socket.user.username} (${socket.id})`);
+    
+    // Join a room with their userId for targeted push events
+    socket.join(socket.user.userId);
 
     // Socket Event Rate Limiting
     const rateLimit = { count: 0, lastReset: Date.now() };
@@ -78,7 +83,10 @@ const initSocket = (server) => {
   // ── Start Periodic Queue Scan ─────────────────────────────────────────────────
   matchmakingService.startPeriodicScan(io);
 
+  ioInstance = io;
   return io;
 };
 
-module.exports = initSocket;
+const getIo = () => ioInstance;
+
+module.exports = { initSocket, getIo };

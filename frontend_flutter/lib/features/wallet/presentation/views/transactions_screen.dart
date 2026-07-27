@@ -35,9 +35,18 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     return Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary));
                   }
                   
-                  final txns = state.transactions;
+                  final allTxns = state.transactions;
+                  final txns = allTxns.where((t) {
+                    if (_selectedTab == 'All') return true;
+                    if (_selectedTab == 'Deposits') return t['type'] == 'deposit';
+                    if (_selectedTab == 'Withdrawals') return t['type'] == 'withdrawal';
+                    if (_selectedTab == 'Entries') return t['type'] == 'entry_fee';
+                    if (_selectedTab == 'Winnings') return t['type'] == 'prize' || t['type'] == 'winnings';
+                    return true;
+                  }).toList();
+
                   if (txns.isEmpty) {
-                    return Center(child: Text('No transactions found', style: TextStyle(color: context.textSecondary)));
+                    return Center(child: Text('No $_selectedTab transactions found', style: TextStyle(color: context.textSecondary)));
                   }
 
                   return ListView.separated(
@@ -123,7 +132,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   }
 
   Widget _buildTransactionCard(dynamic txn) {
-    final isCredit = txn['type'] == 'deposit' || txn['type'] == 'winnings';
+    final isCredit = txn['type'] == 'deposit' || txn['type'] == 'winnings' || txn['type'] == 'prize';
     final isFailed = txn['status'] == 'failed';
     final isPending = txn['status'] == 'pending';
     final amount = txn['amount'] ?? 0;

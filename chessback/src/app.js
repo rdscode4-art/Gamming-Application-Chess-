@@ -57,6 +57,7 @@ const tournamentAdminRoutes = require('./modules/tournaments/tournamentAdminRout
 const userAdminRoutes = require('./modules/users/userAdminRoutes');
 const supportAdminRoutes = require('./modules/support/supportAdminRoutes');
 const notificationAdminRoutes = require('./modules/notifications/notificationAdminRoutes');
+const walletAdminRoutes = require('./modules/wallet/walletAdminRoutes');
 const settingsRoutes = require('./modules/settings/settingsRoutes');
 
 app.get('/', (req, res) => res.status(200).send(`<h1>🚀 Chess Platform Backend is running!</h1>`));
@@ -79,6 +80,7 @@ app.use('/api/admin/tournaments', tournamentAdminRoutes);
 app.use('/api/admin/users', userAdminRoutes);
 app.use('/api/admin/support', supportAdminRoutes);
 app.use('/api/admin/notifications', notificationAdminRoutes);
+app.use('/api/admin/withdrawals', walletAdminRoutes);
 
 // Settings Routes
 app.use('/api/settings', settingsRoutes);
