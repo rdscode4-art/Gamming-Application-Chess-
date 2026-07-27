@@ -1,9 +1,38 @@
-import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Gamepad2, Trophy, Image, Users, Settings, Headset, Bell, Banknote } from 'lucide-react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, Gamepad2, Trophy, Image, Users, Settings, Headset, Bell, Banknote, LogOut } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const Sidebar = () => {
-  return (
-    <aside className="sidebar">
+      </nav>
+
+      <div style={{ marginTop: 'auto', padding: '16px' }}>
+        <button 
+          onClick={() => {
+            logout();
+            navigate('/login');
+          }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            width: '100%',
+            padding: '12px 16px',
+            backgroundColor: 'rgba(229, 57, 53, 0.1)',
+            color: '#E53935',
+            border: 'none',
+            borderRadius: '12px',
+            cursor: 'pointer',
+            fontSize: '15px',
+            fontWeight: '600'
+          }}
+        >
+          <LogOut size={20} />
+          Logout
+        </button>
+      </div>
+    </aside>
+  );
+};
       <div className="sidebar-brand">
         CHESS ADMIN
       </div>
@@ -54,6 +83,32 @@ const Sidebar = () => {
           Notifications
         </NavLink>
       </nav>
+
+      <div style={{ marginTop: 'auto', padding: '16px' }}>
+        <button 
+          onClick={() => {
+            logout();
+            navigate('/login');
+          }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            width: '100%',
+            padding: '12px 16px',
+            backgroundColor: 'rgba(229, 57, 53, 0.1)',
+            color: '#E53935',
+            border: 'none',
+            borderRadius: '12px',
+            cursor: 'pointer',
+            fontSize: '15px',
+            fontWeight: '600'
+          }}
+        >
+          <LogOut size={20} />
+          Logout
+        </button>
+      </div>
     </aside>
   );
 };

@@ -146,9 +146,14 @@ class SocketService {
   }
 
   // ─── Remove listener ─────────────────────────────────────────────────────
-  void off(String event) {
-    _eventListeners.remove(event);
-    _socket?.off(event);
+  void off(String event, [Function(dynamic)? callback]) {
+    if (callback != null) {
+      _eventListeners[event]?.remove(callback);
+      _socket?.off(event, callback);
+    } else {
+      _eventListeners.remove(event);
+      _socket?.off(event);
+    }
   }
 
   // ─── Remove all listeners (useful on logout) ─────────────────────────────

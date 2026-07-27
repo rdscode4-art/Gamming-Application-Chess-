@@ -11,6 +11,18 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   Timer? _localTicker;
   Timer? _disconnectTimer;
 
+  // Store references to listener callbacks so we can remove them specifically
+  late final Function(dynamic) _onMoveAcceptedCb;
+  late final Function(dynamic) _onClockUpdateCb;
+  late final Function(dynamic) _onGameOverCb;
+  late final Function(dynamic) _onOpponentDisconnectedCb;
+  late final Function(dynamic) _onOpponentReconnectedCb;
+  late final Function(dynamic) _onGameStateCb;
+  late final Function(dynamic) _onDrawOfferedCb;
+  late final Function(dynamic) _onDrawAcceptedCb;
+  late final Function(dynamic) _onDrawDeclinedCb;
+  late final Function(dynamic) _onChatMessageCb;
+
   GameBloc() : super(const GameState()) {
     on<GameInitData>(_onInitData);
     on<GameClockTick>(_onClockTick);
@@ -45,17 +57,28 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   }
 
   void _setupSocketListeners() {
+    _onMoveAcceptedCb = (data) { if (!isClosed) add(GameSocketMoveAccepted(data)); };
+    _onClockUpdateCb = (data) { if (!isClosed) add(GameSocketClockUpdate(data)); };
+    _onGameOverCb = (data) { if (!isClosed) add(GameSocketGameOver(data)); };
+    _onOpponentDisconnectedCb = (data) { if (!isClosed) add(GameSocketOpponentDisconnected(data['timeout'] ?? 60)); };
+    _onOpponentReconnectedCb = (_) { if (!isClosed) add(GameSocketOpponentReconnected()); };
+    _onGameStateCb = (data) { if (!isClosed) add(GameSocketGameState(data)); };
+    _onDrawOfferedCb = (data) { if (!isClosed) add(GameSocketDrawOffered(data['byUserId'])); };
+    _onDrawAcceptedCb = (_) { if (!isClosed) add(GameSocketDrawAccepted()); };
+    _onDrawDeclinedCb = (_) { if (!isClosed) add(GameSocketDrawDeclined()); };
+    _onChatMessageCb = (data) { if (!isClosed) add(GameSocketChatReceived(data)); };
+
     _socket.addConnectListener(_rejoinGame);
-    _socket.listen(AppConstants.moveAccepted, (data) => add(GameSocketMoveAccepted(data)));
-    _socket.listen(AppConstants.clockUpdate, (data) => add(GameSocketClockUpdate(data)));
-    _socket.listen(AppConstants.gameOver, (data) => add(GameSocketGameOver(data)));
-    _socket.listen(AppConstants.opponentDisconnected, (data) => add(GameSocketOpponentDisconnected(data['timeout'] ?? 60)));
-    _socket.listen(AppConstants.opponentReconnected, (_) => add(GameSocketOpponentReconnected()));
-    _socket.listen(AppConstants.gameState, (data) => add(GameSocketGameState(data)));
-    _socket.listen(AppConstants.drawOffered, (data) => add(GameSocketDrawOffered(data['byUserId'])));
-    _socket.listen(AppConstants.drawAccepted, (_) => add(GameSocketDrawAccepted()));
-    _socket.listen(AppConstants.drawDeclined, (_) => add(GameSocketDrawDeclined()));
-    _socket.listen(AppConstants.chatMessage, (data) => add(GameSocketChatReceived(data)));
+    _socket.listen(AppConstants.moveAccepted, _onMoveAcceptedCb);
+    _socket.listen(AppConstants.clockUpdate, _onClockUpdateCb);
+    _socket.listen(AppConstants.gameOver, _onGameOverCb);
+    _socket.listen(AppConstants.opponentDisconnected, _onOpponentDisconnectedCb);
+    _socket.listen(AppConstants.opponentReconnected, _onOpponentReconnectedCb);
+    _socket.listen(AppConstants.gameState, _onGameStateCb);
+    _socket.listen(AppConstants.drawOffered, _onDrawOfferedCb);
+    _socket.listen(AppConstants.drawAccepted, _onDrawAcceptedCb);
+    _socket.listen(AppConstants.drawDeclined, _onDrawDeclinedCb);
+    _socket.listen(AppConstants.chatMessage, _onChatMessageCb);
   }
 
   void _onInitData(GameInitData event, Emitter<GameState> emit) {
@@ -267,16 +290,19 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     _socket.removeConnectListener(_rejoinGame);
     _localTicker?.cancel();
     _disconnectTimer?.cancel();
-    _socket.off(AppConstants.moveAccepted);
-    _socket.off(AppConstants.clockUpdate);
-    _socket.off(AppConstants.gameOver);
-    _socket.off(AppConstants.opponentDisconnected);
-    _socket.off(AppConstants.opponentReconnected);
-    _socket.off(AppConstants.gameState);
-    _socket.off(AppConstants.drawOffered);
-    _socket.off(AppConstants.drawAccepted);
-    _socket.off(AppConstants.drawDeclined);
-    _socket.off(AppConstants.chatMessage);
+    
+    // Only remove our specific listeners
+    _socket.off(AppConstants.moveAccepted, _onMoveAcceptedCb);
+    _socket.off(AppConstants.clockUpdate, _onClockUpdateCb);
+    _socket.off(AppConstants.gameOver, _onGameOverCb);
+    _socket.off(AppConstants.opponentDisconnected, _onOpponentDisconnectedCb);
+    _socket.off(AppConstants.opponentReconnected, _onOpponentReconnectedCb);
+    _socket.off(AppConstants.gameState, _onGameStateCb);
+    _socket.off(AppConstants.drawOffered, _onDrawOfferedCb);
+    _socket.off(AppConstants.drawAccepted, _onDrawAcceptedCb);
+    _socket.off(AppConstants.drawDeclined, _onDrawDeclinedCb);
+    _socket.off(AppConstants.chatMessage, _onChatMessageCb);
+    
     return super.close();
   }
 }

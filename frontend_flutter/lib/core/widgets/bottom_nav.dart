@@ -15,9 +15,16 @@ class BottomNav extends StatelessWidget {
       width: double.infinity,
       constraints: const BoxConstraints(maxWidth: 400),
       decoration: BoxDecoration(
-        color: context.glassBgColor,
+        color: Theme.of(context).brightness == Brightness.dark ? AppColors.navy : Colors.white,
         border: Border(top: BorderSide(color: context.glassBorderColor)),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
       ),
       child: ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -37,7 +44,7 @@ class BottomNav extends StatelessWidget {
             ),
             ), // closes Padding
           ), // closes SafeArea
-        ), // closes ClipRRect
+      ), // closes ClipRRect
       ); // closes Container
   }
 
