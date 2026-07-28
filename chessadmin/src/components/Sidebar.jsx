@@ -3,36 +3,11 @@ import { LayoutDashboard, Gamepad2, Trophy, Image, Users, Settings, Headset, Bel
 import { useAuth } from '../context/AuthContext';
 
 const Sidebar = () => {
-      </nav>
+  const { logout } = useAuth();
+  const navigate = useNavigate();
 
-      <div style={{ marginTop: 'auto', padding: '16px' }}>
-        <button 
-          onClick={() => {
-            logout();
-            navigate('/login');
-          }}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            width: '100%',
-            padding: '12px 16px',
-            backgroundColor: 'rgba(229, 57, 53, 0.1)',
-            color: '#E53935',
-            border: 'none',
-            borderRadius: '12px',
-            cursor: 'pointer',
-            fontSize: '15px',
-            fontWeight: '600'
-          }}
-        >
-          <LogOut size={20} />
-          Logout
-        </button>
-      </div>
-    </aside>
-  );
-};
+  return (
+    <aside className="sidebar" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <div className="sidebar-brand">
         CHESS ADMIN
       </div>
