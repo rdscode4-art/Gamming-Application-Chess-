@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Headset, CheckCircle, Clock, XCircle, Send } from 'lucide-react';
 
-const API_URL = 'https://chessback.ridealdigitalseva.com/api/admin/support';
+const API_URL = '/api/admin/support';
 const ADMIN_TOKEN = localStorage.getItem('adminToken') || '';
 
 function Support() {

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Ban, Edit2, CheckCircle } from 'lucide-react';
 
-const API_URL = 'https://chessback.ridealdigitalseva.com/api/admin/users';
+const API_URL = '/api/admin/users';
 
 const Users = () => {
   const [users, setUsers] = useState([]);
