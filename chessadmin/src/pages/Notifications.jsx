@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Send, Bell } from 'lucide-react';
 
-const API_URL = '/api/admin/notifications/send';
-const USERS_API_URL = '/api/admin/users';
+const API_URL = 'https://chessback.ridealdigitalseva.com/api/admin/notifications/send';
+const USERS_API_URL = 'https://chessback.ridealdigitalseva.com/api/admin/users';
 
 const Notifications = () => {
   const [users, setUsers] = useState([]);

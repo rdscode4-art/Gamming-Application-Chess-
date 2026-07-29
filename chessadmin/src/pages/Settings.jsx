@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Save } from 'lucide-react';
 
-const API_URL = '/api/settings';
+const API_URL = 'https://chessback.ridealdigitalseva.com/api/settings';
 const ADMIN_TOKEN = localStorage.getItem('adminToken') || '';
 
 function Settings() {

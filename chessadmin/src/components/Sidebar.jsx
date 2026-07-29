@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Gamepad2, Trophy, Image, Users, Settings, Headset, Bell, Banknote, LogOut } from 'lucide-react';
+import { LayoutDashboard, Gamepad2, Trophy, Image, Users, Settings, Headset, Bell, Banknote, LogOut, BookOpen } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Sidebar = () => {
@@ -7,7 +7,7 @@ const Sidebar = () => {
   const navigate = useNavigate();
 
   return (
-    <aside className="sidebar" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+    <aside className="sidebar">
       <div className="sidebar-brand">
         CHESS ADMIN
       </div>
@@ -26,6 +26,11 @@ const Sidebar = () => {
         <NavLink to="/tournaments" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
           <Trophy size={20} />
           Tournaments
+        </NavLink>
+
+        <NavLink to="/guides" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+          <BookOpen size={20} />
+          Chess Guide
         </NavLink>
 
         <NavLink to="/banners" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
@@ -71,13 +76,14 @@ const Sidebar = () => {
             gap: '12px',
             width: '100%',
             padding: '12px 16px',
-            backgroundColor: 'rgba(229, 57, 53, 0.1)',
-            color: '#E53935',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            color: 'var(--accent-red)',
             border: 'none',
             borderRadius: '12px',
             cursor: 'pointer',
             fontSize: '15px',
-            fontWeight: '600'
+            fontWeight: '600',
+            transition: 'all 0.2s ease'
           }}
         >
           <LogOut size={20} />

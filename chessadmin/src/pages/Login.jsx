@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { Lock, Mail, Loader } from 'lucide-react';
 import '../index.css';
 
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://chessback.ridealdigitalseva.com/api';
 
 const Login = () => {
   const [email, setEmail] = useState('');

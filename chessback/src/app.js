@@ -43,6 +43,7 @@ app.use(express.urlencoded({ extended: true }));
 // ─── Routes ───────────────────────────────────────────────────────────────
 const path = require('path');
 app.use('/avatars', express.static(path.join(__dirname, '..', 'public', 'avatars')));
+app.use('/guides', express.static(path.join(__dirname, '..', 'public', 'guides')));
 
 const authRoutes = require('./modules/auth/authRoutes');
 const leaderboardRoutes = require('./modules/leaderboard/leaderboardRoutes');
@@ -72,6 +73,7 @@ app.use('/api/tournaments', tournamentRoutes);
 app.use('/api/banners', bannerRoutes);
 app.use('/api/support', require('./modules/support/supportRoutes'));
 app.use('/api/notifications', require('./modules/notifications/notificationRoutes'));
+app.use('/api/guides', require('./modules/guides/guideRoutes'));
 
 // Admin Routes (Modularized)
 app.use('/api/admin/gamemodes', gameModeAdminRoutes);
@@ -81,6 +83,7 @@ app.use('/api/admin/users', userAdminRoutes);
 app.use('/api/admin/support', supportAdminRoutes);
 app.use('/api/admin/notifications', notificationAdminRoutes);
 app.use('/api/admin/withdrawals', walletAdminRoutes);
+app.use('/api/admin/guides', require('./modules/guides/guideAdminRoutes'));
 
 // Settings Routes
 app.use('/api/settings', settingsRoutes);

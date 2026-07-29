@@ -1,209 +1,164 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
-import { 
-  Users, UserPlus, Gamepad2, Trophy, 
-  DollarSign, ArrowUpRight, ArrowDownRight, 
-  Activity, Ticket, AlertCircle 
-} from 'lucide-react';
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  LineChart, Line
-} from 'recharts';
+import { useTheme } from '../context/ThemeContext';
+import { Gamepad2, Trophy, Image, Sun, Moon, Plus, ChevronRight, Activity } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
-  const { token } = useAuth();
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({ modes: 0, tournaments: 0, banners: 0 });
+  const [isLoading, setIsLoading] = useState(true);
+  const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await axios.get('/api/auth/dashboard-stats', {
-          headers: { Authorization: `Bearer ${token}` }
+        const [modesRes, tourneysRes, bannersRes] = await Promise.all([
+          axios.get('https://chessback.ridealdigitalseva.com/api/admin/gamemodes'),
+          axios.get('https://chessback.ridealdigitalseva.com/api/admin/tournaments'),
+          axios.get('https://chessback.ridealdigitalseva.com/api/admin/banners')
+        ]);
+        setStats({
+          modes: modesRes.data.length,
+          tournaments: tourneysRes.data.length,
+          banners: bannersRes.data.length
         });
-        if (response.data.status === 'success') {
-          setStats(response.data.data);
-        }
       } catch (error) {
-        console.error('Failed to fetch dashboard stats', error);
+        console.error('Failed to fetch stats', error);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
     fetchStats();
-  }, [token]);
+  }, []);
 
-  if (loading || !stats) {
-    return <div className="loading-state">Loading Analytics...</div>;
-  }
-
-  // Dummy data for charts (since we don't have historical timeseries yet)
-  const revenueData = [
-    { name: 'Mon', amount: stats.financials.totalRevenue * 0.1 },
-    { name: 'Tue', amount: stats.financials.totalRevenue * 0.15 },
-    { name: 'Wed', amount: stats.financials.totalRevenue * 0.2 },
-    { name: 'Thu', amount: stats.financials.totalRevenue * 0.1 },
-    { name: 'Fri', amount: stats.financials.totalRevenue * 0.25 },
-    { name: 'Sat', amount: stats.financials.totalRevenue * 0.15 },
-    { name: 'Sun', amount: stats.financials.totalRevenue * 0.05 },
+  const statCards = [
+    { title: 'Total Game Modes', value: stats.modes, icon: <Gamepad2 size={24} />, color: '#3B82F6', path: '/gamemodes' },
+    { title: 'Active Tournaments', value: stats.tournaments, icon: <Trophy size={24} />, color: '#10B981', path: '/tournaments' },
+    { title: 'Active Banners', value: stats.banners, icon: <Image size={24} />, color: '#F59E0B', path: '/banners' }
   ];
 
   return (
-    <div className="dashboard-container">
-      <div className="page-header">
-        <h1 className="page-title">Platform Analytics</h1>
-        <p className="page-subtitle">Real-time overview of your chess platform</p>
+    <div className="page-container" style={{ animation: 'fadeIn 0.3s ease-out' }}>
+      <div className="page-header" style={{ marginBottom: '40px' }}>
+        <div>
+          <h1 className="page-title">Welcome back, Admin 👋</h1>
+          <p className="page-subtitle">Here is what's happening with your platform today.</p>
+        </div>
+        
+        {/* Theme Toggle Button in Header */}
+        <button 
+          onClick={toggleTheme}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 16px',
+            backgroundColor: 'var(--bg-card)',
+            color: 'var(--text-light)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '50px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: '600',
+            transition: 'all 0.3s ease',
+            boxShadow: 'var(--shadow-sm)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+            e.currentTarget.style.borderColor = 'var(--primary-gold)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+            e.currentTarget.style.borderColor = 'var(--border-color)';
+          }}
+        >
+          {theme === 'light' ? <Sun size={18} color="#F59E0B" /> : <Moon size={18} color="#8B5CF6" />}
+          {theme === 'light' ? 'Light Mode' : 'Dark Mode'}
+        </button>
       </div>
 
-      {/* Financials Row */}
-      <h2 className="section-title">Financial Overview</h2>
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-header">
-            <div>
-              <p className="stat-label">Total Revenue</p>
-              <h3 className="stat-value">₹{stats.financials.totalRevenue.toLocaleString()}</h3>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', marginBottom: '40px' }}>
+        {statCards.map((card, index) => (
+          <div 
+            key={index}
+            className="glass-panel" 
+            style={{ 
+              padding: '24px',
+              display: 'flex',
+              flexDirection: 'column',
+              position: 'relative',
+              overflow: 'hidden',
+              cursor: 'pointer'
+            }}
+            onClick={() => navigate(card.path)}
+            onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+          >
+            <div style={{
+              position: 'absolute',
+              top: '-20px',
+              right: '-20px',
+              width: '100px',
+              height: '100px',
+              borderRadius: '50%',
+              background: `radial-gradient(circle, ${card.color}33 0%, transparent 70%)`,
+              zIndex: 0
+            }}></div>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', zIndex: 1 }}>
+              <div style={{ 
+                padding: '12px', 
+                borderRadius: '12px', 
+                backgroundColor: `${card.color}15`,
+                color: card.color
+              }}>
+                {card.icon}
+              </div>
+              <ChevronRight size={20} color="var(--text-muted)" style={{ opacity: 0.5 }} />
             </div>
-            <div className="stat-icon-wrapper" style={{ background: 'rgba(34, 197, 94, 0.1)', color: '#22C55E' }}>
-              <DollarSign size={24} />
+            
+            <h3 style={{ color: 'var(--text-muted)', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px', zIndex: 1 }}>
+              {card.title}
+            </h3>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', zIndex: 1 }}>
+              <p style={{ fontSize: '36px', fontWeight: '800', color: 'var(--text-light)', lineHeight: 1 }}>
+                {isLoading ? '...' : card.value}
+              </p>
             </div>
           </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-header">
-            <div>
-              <p className="stat-label">Total Deposits</p>
-              <h3 className="stat-value">₹{stats.financials.totalDeposits.toLocaleString()}</h3>
-            </div>
-            <div className="stat-icon-wrapper" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6' }}>
-              <ArrowUpRight size={24} />
-            </div>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-header">
-            <div>
-              <p className="stat-label">Total Withdrawals</p>
-              <h3 className="stat-value">₹{stats.financials.totalWithdrawals.toLocaleString()}</h3>
-            </div>
-            <div className="stat-icon-wrapper" style={{ background: 'rgba(229, 57, 53, 0.1)', color: '#E53935' }}>
-              <ArrowDownRight size={24} />
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* Users & Engagement Row */}
-      <h2 className="section-title" style={{ marginTop: '32px' }}>Users & Engagement</h2>
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-header">
-            <div>
-              <p className="stat-label">Total Users</p>
-              <h3 className="stat-value">{stats.users.total.toLocaleString()}</h3>
-            </div>
-            <div className="stat-icon-wrapper" style={{ background: 'rgba(245, 166, 35, 0.1)', color: '#F5A623' }}>
-              <Users size={24} />
-            </div>
-          </div>
-          <p className="stat-footer">
-            <span style={{ color: '#22C55E' }}>+{stats.users.newLast7Days}</span> in last 7 days
-          </p>
+      <div className="glass-panel" style={{ position: 'relative', overflow: 'hidden' }}>
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '4px',
+          background: 'linear-gradient(90deg, var(--primary-gold), var(--accent-blue))'
+        }}></div>
+        
+        <div style={{ padding: '24px 32px', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <Activity size={20} color="var(--primary-gold)" />
+          <h2 style={{ fontSize: '18px', fontWeight: 'bold' }}>Quick Actions</h2>
         </div>
-
-        <div className="stat-card">
-          <div className="stat-header">
-            <div>
-              <p className="stat-label">Registered vs Guests</p>
-              <h3 className="stat-value">{stats.users.registered} / {stats.users.guests}</h3>
-            </div>
-            <div className="stat-icon-wrapper" style={{ background: 'rgba(108, 63, 197, 0.1)', color: '#6C3FC5' }}>
-              <UserPlus size={24} />
-            </div>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-header">
-            <div>
-              <p className="stat-label">Total Games Played</p>
-              <h3 className="stat-value">{stats.engagement.totalGames.toLocaleString()}</h3>
-            </div>
-            <div className="stat-icon-wrapper" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6' }}>
-              <Gamepad2 size={24} />
-            </div>
-          </div>
-          <p className="stat-footer">
-            <span style={{ color: '#F5A623' }}>{stats.engagement.liveGames}</span> active live games
-          </p>
+        
+        <div style={{ padding: '32px', display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
+          <button className="primary-btn" onClick={() => navigate('/tournaments')} style={{ padding: '12px 24px' }}>
+            <Plus size={18} /> Create Tournament
+          </button>
+          <button className="glass-button" onClick={() => navigate('/gamemodes')} style={{ padding: '12px 24px', fontSize: '15px' }}>
+            <Plus size={18} /> Add Game Mode
+          </button>
+          <button className="glass-button" onClick={() => navigate('/guides')} style={{ padding: '12px 24px', fontSize: '15px' }}>
+            <Plus size={18} /> Write Guide
+          </button>
         </div>
       </div>
-
-      {/* Charts & Operations */}
-      <div className="charts-grid" style={{ marginTop: '32px', display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
-        <div className="glass-panel" style={{ padding: '24px' }}>
-          <h3 className="section-title" style={{ marginTop: 0, marginBottom: '24px' }}>Revenue Overview (Last 7 Days)</h3>
-          <div style={{ height: '300px', width: '100%' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={revenueData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
-                <XAxis dataKey="name" stroke="#8A94A6" axisLine={false} tickLine={false} />
-                <YAxis stroke="#8A94A6" axisLine={false} tickLine={false} tickFormatter={(val) => `₹${val}`} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#070D18', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
-                  itemStyle={{ color: '#F5A623' }}
-                />
-                <Bar dataKey="amount" fill="#F5A623" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          <div className="stat-card">
-            <div className="stat-header">
-              <div>
-                <p className="stat-label">Pending Withdrawals</p>
-                <h3 className="stat-value">{stats.operations.pendingWithdrawals}</h3>
-              </div>
-              <div className="stat-icon-wrapper" style={{ background: 'rgba(229, 57, 53, 0.1)', color: '#E53935' }}>
-                <AlertCircle size={24} />
-              </div>
-            </div>
-            {stats.operations.pendingWithdrawals > 0 && (
-              <p className="stat-footer" style={{ color: '#E53935' }}>Action required</p>
-            )}
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-header">
-              <div>
-                <p className="stat-label">Open Support Tickets</p>
-                <h3 className="stat-value">{stats.operations.pendingTickets}</h3>
-              </div>
-              <div className="stat-icon-wrapper" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6' }}>
-                <Ticket size={24} />
-              </div>
-            </div>
-          </div>
-          
-          <div className="stat-card">
-            <div className="stat-header">
-              <div>
-                <p className="stat-label">Total Tournaments</p>
-                <h3 className="stat-value">{stats.engagement.totalTournaments}</h3>
-              </div>
-              <div className="stat-icon-wrapper" style={{ background: 'rgba(245, 166, 35, 0.1)', color: '#F5A623' }}>
-                <Trophy size={24} />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
     </div>
   );
 };

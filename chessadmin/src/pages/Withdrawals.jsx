@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { CheckCircle, XCircle, Clock, Copy } from 'lucide-react';
 
-const API_URL = '/api/admin/withdrawals';
+const API_URL = 'https://chessback.ridealdigitalseva.com/api/admin/withdrawals';
 
 const Withdrawals = () => {
   const [withdrawals, setWithdrawals] = useState([]);

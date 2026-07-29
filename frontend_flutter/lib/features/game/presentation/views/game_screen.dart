@@ -31,6 +31,9 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   late ChessBoardController chessController;
   final AudioPlayer _audioPlayer = AudioPlayer()..setPlayerMode(PlayerMode.lowLatency);
 
+  String? _selectedSquare;
+  List<String> _validMoves = [];
+
   bool _getPref(BuildContext context, String key, bool defaultValue) {
     final state = context.read<ProfileBloc>().state;
     final prefs = state.userProfile?['preferences'];
@@ -78,6 +81,71 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   }
 
   String _fmt(int s) => '${(s ~/ 60).toString().padLeft(2, '0')}:${(s % 60).toString().padLeft(2, '0')}';
+
+  void _onSquareTapped(String square, String playerColor) {
+    if (!context.read<GameBloc>().state.isMyTurn) return;
+    
+    final chess = chessController.game;
+    
+    if (_selectedSquare != null && _validMoves.contains(square)) {
+      final moves = chess.generate_moves({'legal': true});
+      var moveObj;
+      for (var m in moves) {
+        if (m.fromAlgebraic == _selectedSquare && m.toAlgebraic == square) {
+          moveObj = m;
+          break;
+        }
+      }
+      
+      if (moveObj != null) {
+        final isPromotion = (moveObj.flags & 8) != 0; // PROMOTION flag
+        
+        if (isPromotion) {
+          chessController.makeMoveWithPromotion(
+            from: _selectedSquare!,
+            to: square,
+            pieceToPromoteTo: 'q',
+          );
+        } else {
+          chessController.makeMove(
+            from: _selectedSquare!,
+            to: square,
+          );
+        }
+        
+        _playFeedback();
+        context.read<GameBloc>().add(GameMakeMove(
+          from: _selectedSquare!,
+          to: square,
+          promotion: isPromotion ? 'q' : null,
+        ));
+        
+        setState(() {
+          _selectedSquare = null;
+          _validMoves = [];
+        });
+        return;
+      }
+    }
+
+    final moves = chess.generate_moves({'legal': true});
+    final validToSquares = moves
+        .where((m) => m.fromAlgebraic == square)
+        .map((m) => m.toAlgebraic)
+        .toList();
+    
+    if (validToSquares.isNotEmpty) {
+      setState(() {
+        _selectedSquare = square;
+        _validMoves = validToSquares;
+      });
+    } else {
+      setState(() {
+        _selectedSquare = null;
+        _validMoves = [];
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -219,26 +287,92 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                               BoxShadow(color: Theme.of(context).brightness == Brightness.dark ? AppColors.purpleLight.withValues(alpha: 0.3) : Theme.of(context).colorScheme.primary.withValues(alpha: 0.3), blurRadius: 30, spreadRadius: -5),
                             ],
                           ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(14),
-                            child: ChessBoard(
-                              controller: chessController,
-                              boardColor: BoardColor.brown,
-                              boardOrientation: state.playerColor == 'black' ? PlayerColor.black : PlayerColor.white,
-                              enableUserMoves: state.isMyTurn, // Prevents moving opponent's pieces
-                              onMove: () {
-                                final history = chessController.game.history;
-                                if (history.isNotEmpty) {
-                                  final move = history.last.move;
-                                  _playFeedback();
-                                  context.read<GameBloc>().add(GameMakeMove(
-                                        from: move.fromAlgebraic,
-                                        to: move.toAlgebraic,
-                                        promotion: move.promotion != null ? 'q' : null,
-                                      ));
-                                }
-                              },
-                            ),
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              final size = constraints.maxWidth;
+                              final squareSize = size / 8;
+                              final isWhite = state.playerColor != 'black';
+
+                              return Listener(
+                                behavior: HitTestBehavior.translucent,
+                                onPointerDown: (event) {
+                                  final col = (event.localPosition.dx / squareSize).floor();
+                                  final row = (event.localPosition.dy / squareSize).floor();
+                                  if (col >= 0 && col <= 7 && row >= 0 && row <= 7) {
+                                    final files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+                                    final ranks = ['8', '7', '6', '5', '4', '3', '2', '1'];
+                                    
+                                    final file = isWhite ? files[col] : files[7 - col];
+                                    final rank = isWhite ? ranks[row] : ranks[7 - row];
+                                    
+                                    _onSquareTapped('$file$rank', state.playerColor);
+                                  }
+                                },
+                                child: Stack(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(14),
+                                      child: ChessBoard(
+                                        controller: chessController,
+                                        boardColor: BoardColor.brown,
+                                        boardOrientation: isWhite ? PlayerColor.white : PlayerColor.black,
+                                        enableUserMoves: state.isMyTurn,
+                                        onMove: () {
+                                          setState(() {
+                                            _selectedSquare = null;
+                                            _validMoves = [];
+                                          });
+                                          final history = chessController.game.history;
+                                          if (history.isNotEmpty) {
+                                            final move = history.last.move;
+                                            _playFeedback();
+                                            context.read<GameBloc>().add(GameMakeMove(
+                                                  from: move.fromAlgebraic,
+                                                  to: move.toAlgebraic,
+                                                  promotion: move.promotion != null ? 'q' : null,
+                                                ));
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                    // Highlights Overlay
+                                    IgnorePointer(
+                                      child: GridView.builder(
+                                        physics: const NeverScrollableScrollPhysics(),
+                                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 8),
+                                        itemCount: 64,
+                                        itemBuilder: (context, index) {
+                                          final col = index % 8;
+                                          final row = index ~/ 8;
+                                          final file = isWhite ? ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'][col] : ['h', 'g', 'f', 'e', 'd', 'c', 'b', 'a'][col];
+                                          final rank = isWhite ? ['8', '7', '6', '5', '4', '3', '2', '1'][row] : ['1', '2', '3', '4', '5', '6', '7', '8'][row];
+                                          final square = '$file$rank';
+                                          
+                                          if (square == _selectedSquare) {
+                                            return Container(color: Colors.yellow.withOpacity(0.4));
+                                          }
+                                          if (_validMoves.contains(square)) {
+                                            final hasPiece = chessController.game.get(square) != null;
+                                            return Center(
+                                              child: Container(
+                                                width: hasPiece ? squareSize * 0.8 : squareSize * 0.25,
+                                                height: hasPiece ? squareSize * 0.8 : squareSize * 0.25,
+                                                decoration: BoxDecoration(
+                                                  color: hasPiece ? Colors.transparent : Colors.black.withOpacity(0.25),
+                                                  shape: BoxShape.circle,
+                                                  border: hasPiece ? Border.all(color: Colors.black.withOpacity(0.25), width: 5) : null,
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                          return const SizedBox();
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
                           ),
                         ),
                       ),

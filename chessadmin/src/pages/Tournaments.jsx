@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
 
-const API_URL = '/api/admin/tournaments';
+const API_URL = 'https://chessback.ridealdigitalseva.com/api/admin/tournaments';
 
 const Tournaments = () => {
   const [tournaments, setTournaments] = useState([]);
